@@ -1,0 +1,119 @@
+/* post-detail.css — 게시글 상세 */
+
+body { background: #f4f6f8; }
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px 24px;
+  box-sizing: border-box;
+}
+
+/* 제목 */
+.container h2 {
+  margin: 0 0 12px;
+  font-size: 1.6rem;
+  color: #111827;
+  letter-spacing: -0.3px;
+}
+
+/* 메타 정보 */
+.meta {
+  color: #6b7280;
+  font-size: 0.92rem;
+  margin-bottom: 16px;
+}
+
+/* 본문 카드 */
+.content {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  color: #2c2c2c;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+/* 소유자 액션 (수정/삭제) — 클래스가 없을 때도 보정 */
+.owner-actions,
+.container .content + div,
+.container .meta + div {
+  margin: 12px 0 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* 버튼 스타일 */
+.owner-actions a,
+.owner-actions button,
+.container .content + div a,
+.container .content + div button {
+  display: inline-block;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  padding: 9px 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s, transform .02s;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+}
+
+.owner-actions a:hover,
+.owner-actions button:hover,
+.container .content + div a:hover,
+.container .content + div button:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.owner-actions a[href*="edit"],
+.container .content + div a[href*="edit"] {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+.owner-actions a[href*="edit"]:hover,
+.container .content + div a[href*="edit"]:hover {
+  background: #0056b3;
+}
+
+/* 첨부파일 */
+.container h4 { margin: 18px 0 10px; color: #374151; }
+.container ul { list-style: none; padding: 0; margin: 0; }
+.container ul li {
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.container ul li:hover { background-color: #fff; }
+
+.container ul li a {
+  color: #111827;
+  text-decoration: none;
+}
+.container ul li a:hover { color: #007bff; text-decoration: underline; }
+
+/* 댓글 블록(간단한 여백만) */
+.container h4 + .comment-list,
+.container h4 + div { margin-top: 10px; }
+
+/* 목록으로 이동 */
+a.back {
+  display: inline-block;
+  margin-top: 16px;
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+a.back:hover { text-decoration: underline; }
+
+/* 반응형 */
+@media (max-width: 560px) {
+  .container { padding: 0 16px 20px; }
+  .container h2 { font-size: 1.4rem; }
+}

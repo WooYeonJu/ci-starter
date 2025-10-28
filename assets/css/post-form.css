@@ -1,0 +1,102 @@
+/* post-form.css — 게시글 생성/수정 공용 스타일 */
+
+/* 레이아웃(카드) */
+.wrap { max-width: 800px; margin: 0 auto; }
+.wrap h3 { margin: 0 0 16px; font-size: 1.4rem; color: #222; letter-spacing: -.3px; }
+
+.wrap form {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+/* 입력 영역 */
+.row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+
+label { font-size: .9rem; font-weight: 500; color: #444; }
+
+/* 인풋 공통 */
+input[type="text"], select, textarea, input[type="file"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #fff;
+  font-size: .95rem;
+  transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+
+textarea { min-height: 220px; resize: vertical; }
+
+input[type="text"]:focus, select:focus, textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.15);
+  outline: none;
+}
+
+/* 파일 영역 */
+#files { padding: 8px 10px; }
+
+#fileList { list-style: none; padding-left: 0; margin: 8px 0 0; }
+#fileList li {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 8px 10px;
+  border: 1px solid #eef2f7; border-radius: 8px;
+  background: #f9fbff; margin-bottom: 6px; font-size: .92rem;
+}
+
+/* 파일 삭제 버튼 */
+#fileList li button[type="button"],
+#clearAll {
+  border: 1px solid #e5e7eb; background: #fff; color: #374151;
+  border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: .9rem;
+  transition: background .2s, border-color .2s;
+}
+#fileList li button[type="button"]:hover,
+#clearAll:hover { background: #f3f4f6; border-color: #d1d5db; }
+
+/* 액션(등록/저장/취소) — .actions 클래스가 있으면 우선 적용 */
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+
+/* 수정 페이지 마크업 호환: 마지막 행이 버튼들인 경우도 동일 적용 */
+.wrap form .row:last-child > button,
+.wrap form .row:last-child > a { margin-top: 2px; }
+
+/* 기본 버튼(등록/저장) */
+.actions button[type="submit"],
+.wrap form .row:last-child > button[type="submit"] {
+  background: #007bff; color: #fff; border: none; border-radius: 8px;
+  padding: 10px 16px; font-size: .95rem; cursor: pointer;
+  transition: background .2s, transform .02s;
+}
+.actions button[type="submit"]:hover,
+.wrap form .row:last-child > button[type="submit"]:hover { background: #0056b3; }
+.actions button[type="submit"]:active,
+.wrap form .row:last-child > button[type="submit"]:active { transform: translateY(1px); }
+
+/* 취소/목록 링크 버튼 톤 */
+.actions a,
+.wrap form .row:last-child > a {
+  display: inline-block; text-decoration: none; color: #374151;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+  padding: 9px 14px; font-size: .95rem;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.actions a:hover,
+.wrap form .row:last-child > a:hover { background: #f3f4f6; border-color: #d1d5db; }
+
+/* 유효성 에러 */
+.form-error {
+  margin: 0 0 12px; padding: 10px 14px;
+  border: 1px solid #ffccd1; background: #ffeef0; color: #b21f2d;
+  border-radius: 8px; font-size: .9rem;
+}
+
+/* 반응형 */
+@media (max-width: 560px) {
+  .wrap form { padding: 20px; }
+  textarea { min-height: 180px; }
+}

@@ -1,0 +1,77 @@
+/* 공통 폰트 / 배경 */
+body {
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  background-color: #f4f6f8;
+  margin: 0;
+}
+
+/* 헤더 전체 */
+.site-header {
+  background-color: #fff;
+  border-bottom: 1px solid #e1e4e8;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  padding: 0 40px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* 내부 정렬 */
+.header-inner {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 좌측 로고 */
+.site-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.site-title:hover {
+  text-decoration: underline;
+}
+
+/* 우측 메뉴 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.95rem;
+}
+
+/* 유저 이름 */
+.welcome {
+  color: #333;
+}
+
+/* 로그아웃 버튼 */
+.logout-btn {
+  background-color: #007bff;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #0056b3;
+}
+
+/* 페이지 본문 공통 여백 */
+.main-content {
+  padding: 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}

@@ -49,6 +49,33 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | Examples:	my-controller/index	-> my_controller/index
 |		my-controller/my-method	-> my_controller/my_method
 */
-$route['default_controller'] = 'main';
+$route['default_controller'] = 'auth/login'; // 시작화면 = 로그인화면
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
+
+// 로그인 라우터 설정
+$route['login']  = 'auth/login';
+
+// 회원가입 라우터 설정
+$route['register']      = 'auth/register';
+$route['do_register']   = 'auth/do_register';
+
+// 로그아웃 라우터 설정
+$route['logout'] = 'auth/logout';
+
+// 포스트 목록 라우터 설정
+$route['post'] = 'post/list';
+
+// 포스트 생성 라우터 설정
+$route['post/create']   = 'post/create';
+$route['post/do_create'] = 'post/do_create';
+
+// 파일 다운로드용 라우터 설정
+$route['post/download/(:num)'] = 'post/download/$1';
+
+// 게시물 수정 라우터 설정
+$route['post/edit/(:num)']    = 'post/edit/$1';
+$route['post/do_edit/(:num)'] = 'post/do_edit/$1';
+
+// 게시물 삭제 라우터 설정
+$route['post/delete/(:num)']  = 'post/delete/$1';

@@ -1,0 +1,147 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Comment extends MY_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->model('Comment_model', 'comment');
+        $this->load->helper(['form', 'url']);
+    }
+
+    // /** 게시물의 댓글을 조회 */
+    // public function list($post_id)
+    // {
+    //     $post_id   = (int)$post_id;
+    //     // 이전 조회 마지막 댓글 path 이후부터 가져오겠다는 뜻
+    //     $afterPath = $this->params['afterPath'] ?? '';
+    //     // 한 번에 가져올 갯수 제한 200개
+    //     $limit     = (int)($this->params['limit'] ?? 200);
+
+    //     $data['comments'] = $this->comment->get_by_post_page($post_id, $afterPath, $limit);
+    //     $this->load->vars($data);
+    //     $this->load->view('comment/list');
+    // }
+
+    public function list_json($post_id)
+    {
+        $post_id   = (int)$post_id;
+        // 이전 조회 마지막 댓글 path 이후부터 가져오겠다는 뜻
+        $afterPath = $this->params['afterPath'] ?? '';
+        // 한 번에 가져올 갯수 제한 200개
+        $limit     = (int)($this->params['limit'] ?? 10);
+        if ($limit > 500) $limit = 500; // 안전 상한
+
+        // 모델에서 limit+1로 가져와 hasMore/nextCursor 계산
+        $page = $this->comment->get_by_post_page_fetch_plus($post_id, $afterPath, $limit);
+
+        // 아이템 조각만 렌더 (부분뷰: comment/_items.php)
+        $html = $this->load->view('comment/_items', ['comments' => $page['items']], TRUE);
+
+        return $this->output->set_content_type('application/json','utf-8')
+            ->set_output(json_encode([
+                'status'     => 'success',
+                'html'       => $html,
+                'hasMore'    => $page['hasMore'],
+                'nextCursor' => $page['nextCursor'],
+            ], JSON_UNESCAPED_UNICODE));
+    }
+
+
+
+    /** parent_id의 직계 자식만 페이지네이션 (작성일 오름차순) */
+    public function children()
+    {
+        $parent_id   = (int)($this->params['parent_id'] ?? 0);
+        $lastCreated = $this->params['lastCreated'] ?? null; // 'YYYY-mm-dd HH:ii:ss'
+        $lastId      = (int)($this->params['lastId'] ?? 0);
+        $limit       = (int)($this->params['limit'] ?? 50);
+
+        try {
+            $rows = $this->comment->get_children_page($parent_id, $lastCreated, $lastId, $limit);
+            return $this->output
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'success','rows'=>$rows], JSON_UNESCAPED_UNICODE));
+        } catch (Throwable $e) {
+            log_message('error', 'children error: '.$e->getMessage());
+            return $this->output->set_status_header(500)
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
+        }
+    }
+
+    /** 특정 루트 스레드 전위순서 스트리밍 (path 커서 기반) */
+    public function thread($root_id)
+    {
+        $root_id   = (int)$root_id;
+        $afterPath = $this->params['afterPath'] ?? '';
+        $limit     = (int)($this->params['limit'] ?? 200);
+
+        try {
+            $rows = $this->comment->get_thread_page($root_id, $afterPath, $limit);
+            return $this->output
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'success','rows'=>$rows], JSON_UNESCAPED_UNICODE));
+        } catch (Throwable $e) {
+            log_message('error', 'thread error: '.$e->getMessage());
+            return $this->output->set_status_header(500)
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
+        }
+    }
+
+    /** 댓글 작성 */
+    public function create()
+    {
+
+        // AJAX(Asynchronous JavaScript And XML) 응답 
+        // = 페이지를 새로고침하지 않고 서버에 요청을 보내고 응답을 받는 기술
+        // = HTML 페이지 전체가 아니라 데이터(JSON, 텍스트 등)만 반환하는 응답
+
+        // php 오류 출력 비활성화 -> AJAX로 요청할 때 php 경고 등이 응답 본문에 출력되어 json을 깨트리는 일 방지
+        @ini_set('display_errors', 0); 
+        // php 에러 보고 중 CI3의 오래된 문법에서 발생하는 경고는 무시
+        @error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
+        // 사용자 정보 조회
+        $me = $this->session->userdata('user');
+        $user_id = is_array($me) ? (int)($me['user_id'] ?? 0) : (int)$me;
+
+        $post_id     = (int)($this->params['post_id'] ?? 0);
+        $detail      = trim((string)($this->params['comment_detail'] ?? ''));
+        $parent_raw  = $this->params['parent_id'] ?? null;
+        $parent_id   = (isset($parent_raw) && (int)$parent_raw > 0) ? (int)$parent_raw : null;
+
+        // 사용자 아이디가 비어있는 경우 401 에러 처리
+        if (!$user_id) {
+            return $this->output->set_status_header(401)
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'error','message'=>'로그인이 필요합니다'], JSON_UNESCAPED_UNICODE));
+        }
+        // 포스트 아이디 혹은 댓글 내용이 비어있는 경우 500 에러
+        if (!$post_id || $detail === '') {
+            return $this->output->set_status_header(400)
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'error','message'=>'잘못된 요청입니다'], JSON_UNESCAPED_UNICODE));
+        }
+
+        // 댓글 저장 시도
+        try {
+            $new_id = $this->comment->create($post_id, $user_id, $detail, $parent_id);
+
+            // 성공 시 AJAX 요청에 대한 응답으로 JSON 형식의 응답 반환
+            return $this->output
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'success','comment_id'=>$new_id], JSON_UNESCAPED_UNICODE));
+
+        } catch (Throwable $e) {
+            // 오류 발생 시 로그 기록
+            log_message('error', 'comment/create failed: '.$e->getMessage());
+            // http 응답 코드 500으로 설정하여 전송
+            return $this->output->set_status_header(500)
+                ->set_content_type('application/json','utf-8')
+                ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
+        }
+    }
+}

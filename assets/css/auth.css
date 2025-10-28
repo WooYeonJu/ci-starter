@@ -1,0 +1,108 @@
+/* auth.css (login, register 공용) */
+body {
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  background-color: #f4f6f8;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+h1 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+form {
+  background-color: #fff;
+  padding: 32px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 360px;
+  box-sizing: border-box;
+}
+
+form div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;              /* 6px → 4px로 줄임 */
+  margin-bottom: 12px;   /* 18px → 12px로 줄임 */
+}
+
+label {
+  color: #444;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  background-color: #f8faff;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: #007bff;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+  outline: none;
+}
+
+button[type="submit"] {
+  width: 100%;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 12px 0;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 8px;       /* 6px → 8px으로 약간 여유 */
+}
+
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+p a, a {
+  display: inline-block;
+  margin-top: 16px;
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+p a:hover, a:hover {
+  text-decoration: underline;
+}
+
+/* 유효성 에러 메시지(폼 상단) */
+.auth-error {
+  width: 360px;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  background: #ffeef0;
+  color: #b21f2d;
+  border: 1px solid #ffccd1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* 작은 화면 대응 */
+@media (max-width: 400px) {
+  form, .auth-error { width: 92%; padding: 24px; }
+}

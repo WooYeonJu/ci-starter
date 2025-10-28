@@ -1,0 +1,235 @@
+/* comments.css — 댓글 작성/목록 공용 스타일 */
+
+/* 섹션 타이틀 */
+h3 {
+  margin: 16px 0 10px;
+  font-size: 1.1rem;
+  color: #111827;
+  letter-spacing: -0.2px;
+}
+
+/* ── 새 댓글 작성 카드 ───────────────────────────────── */
+#comment-form form {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+#comment-form textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: .95rem;
+  resize: vertical;
+  transition: border-color .2s, box-shadow .2s;
+}
+#comment-form textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.15);
+  outline: none;
+}
+
+/* 헤더: 제목 + 등록 버튼 우측 정렬 */
+#comment-form .cmt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 8px;
+}
+
+#comment-form .cmt-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+/* 등록 버튼 (상단 우측) */
+#comment-form .cmt-head .btn-primary {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: .95rem;
+  cursor: pointer;
+  transition: background .2s, transform .02s;
+}
+#comment-form .cmt-head .btn-primary:hover { background: #0056b3; }
+#comment-form .cmt-head .btn-primary:active { transform: translateY(1px); }
+
+
+/* ── 댓글 목록 ──────────────────────────────────────── */
+#comment-section { margin-top: 18px; }
+
+.comment-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* 댓글 아이템 카드 */
+.comment-item {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.03);
+}
+
+/* 작성자 / 날짜 / 본문 */
+.comment-author {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.comment-date {
+  color: #6b7280;
+  font-size: .82rem;
+  margin-top: 2px;
+}
+
+.comment-body {
+  margin: 8px 0 6px;
+  color: #2c2c2c;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* 답글 버튼 */
+.btn-reply {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+.btn-reply:hover { background: #f3f4f6; border-color: #d1d5db; }
+
+/* ── 대댓글 입력 폼 ─────────────────────────────────── */
+.reply-form {
+  margin-top: 8px;
+  padding: 10px;
+  border-left: 3px solid #e8f1ff;   /* 대댓글 시각적 구분 */
+  background: #fafcff;
+  border-radius: 6px;
+}
+
+.reply-form textarea {
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: .93rem;
+  resize: vertical;
+  transition: border-color .2s, box-shadow .2s;
+}
+.reply-form textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.12);
+  outline: none;
+}
+
+.reply-form button[type="submit"] {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: background .2s, transform .02s;
+}
+.reply-form button[type="submit"]:hover { background: #0056b3; }
+.reply-form button[type="submit"]:active { transform: translateY(1px); }
+
+.reply-form .btn-cancel-reply {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: .9rem;
+  margin-left: 6px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+.reply-form .btn-cancel-reply:hover {
+  background: #f3f4f6; border-color: #d1d5db;
+}
+
+/* ── 보조 스타일 ───────────────────────────────────── */
+.comment-item:hover { background: #fcfdff; }
+
+.loading-indicator {  /* 필요 시 JS에서 사용 */
+  margin: 10px 0;
+  color: #6b7280;
+  font-size: .9rem;
+  text-align: center;
+}
+
+/* 좁은 화면 */
+@media (max-width: 560px) {
+  .comment-item { padding: 10px 12px; }
+  .reply-form { padding: 8px; }
+}
+
+/* 대댓글에만 좌측 L자 가이드(└) 표시 + 박스 바깥 배치 */
+.comment-item { position: relative; overflow: visible; }
+
+/* L자 가이드: 순수 CSS 선으로 그리기 (폰트 의존 X) */
+.comment-item[data-depth]:not([data-depth="0"])::before {
+  content: "";
+  position: absolute;
+  left: -22px;            /* 박스 밖으로 빼기 → 침투 X */
+  top: 5px;              /* 작성자 라인 근처 */
+  width: 14px;
+  height: 17px;
+  border-left: 2px solid #cfe2ff;   /* 연한 파란색 세로선 */
+  border-bottom: 2px solid #cfe2ff; /* 연한 파란색 가로선 */
+  border-bottom-left-radius: 3px;
+  pointer-events: none;
+}
+
+/* 대댓글 카드 좌측 가이드(옵션): 아주 옅은 세로 라인 */
+.comment-item[data-depth]:not([data-depth="0"]) {
+  border-left: 3px solid #eaf2ff;
+}
+
+/* 모바일에서 간격 약간 보정(선택) */
+@media (max-width: 560px) {
+  .comment-item[data-depth]:not([data-depth="0"])::before { left: -20px; }
+}
+
+/* ────────────────────────────────
+   댓글 상단 작성자/날짜 라인 정렬
+   ──────────────────────────────── */
+.comment-item .meta-line {
+  display: flex;
+  justify-content: space-between;  /* 양 끝 정렬 */
+  align-items: flex-end;           /* 하단 정렬 */
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f2f5;  /* 연한 구분선 */
+}
+
+.comment-item .meta-line .comment-author {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.comment-item .meta-line .comment-date {
+  font-size: 0.82rem;
+  color: #6b7280;
+}

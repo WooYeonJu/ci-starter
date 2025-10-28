@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = '';
+$config['base_url'] = 'http://localhost/';
 
 /*
 |--------------------------------------------------------------------------
@@ -224,7 +224,7 @@ $config['allow_get_array'] = TRUE;
 | your log files will fill up very fast.
 |
 */
-$config['log_threshold'] = 0;
+$config['log_threshold'] = 3;
 
 /*
 |--------------------------------------------------------------------------
@@ -325,7 +325,8 @@ $config['cache_query_string'] = FALSE;
 | https://codeigniter.com/user_guide/libraries/encryption.html
 |
 */
-$config['encryption_key'] = '';
+// CI3 세션, 암호화, CSRF 토큰 등에 사용되는 키
+$config['encryption_key'] = 'db70b398a111cc158a97e50452aed1c966d5c634561f36719fc5e5d49ec66ecf';
 
 /*
 |--------------------------------------------------------------------------
@@ -381,7 +382,7 @@ $config['encryption_key'] = '';
 $config['sess_driver'] = 'files';
 $config['sess_cookie_name'] = 'ci_session';
 $config['sess_expiration'] = 7200;
-$config['sess_save_path'] = NULL;
+$config['sess_save_path'] = APPPATH.'cache/sessions';
 $config['sess_match_ip'] = FALSE;
 $config['sess_time_to_update'] = 300;
 $config['sess_regenerate_destroy'] = FALSE;
@@ -433,6 +434,10 @@ $config['standardize_newlines'] = FALSE;
 |          for backwards compatibility purposes!
 |
 */
+// XSS 공격(<script></script> 같은 악성 스크립트를 입력 필드에 삽입해서 다른 사용자의 브라우저에서 실행되게 하는 공격)
+// true로 설정해두면 모든 $this->input->post(), $this->input->get() 호출될 때마다 입력값 자동 필터링 되지만
+// HTML 태그까지 전부 이스케이프 되어 <p></p> 같은 일반 태그도 꺠질 수 있음
+// 실무에서는 FALSE 유지하고 출력할 대 html_escape() 적용하는 식으로 관리
 $config['global_xss_filtering'] = FALSE;
 
 /*
@@ -449,6 +454,8 @@ $config['global_xss_filtering'] = FALSE;
 | 'csrf_regenerate' = Regenerate token on every submission
 | 'csrf_exclude_uris' = Array of URIs which ignore CSRF checks
 */
+// csrf 공격(사용자가 로그인한 상태에서 악의적인 사이트가 사용자의 브라우저를 통해 의도치 않은 POST 공격을 보내는 요청) 토큰 검증 수행
+// 브라우저에서 POST 요청 보낼 때 csrf 토큰 검증 절차를 걸쳐 유효한 경우에만 인증
 $config['csrf_protection'] = FALSE;
 $config['csrf_token_name'] = 'csrf_test_name';
 $config['csrf_cookie_name'] = 'csrf_cookie_name';
