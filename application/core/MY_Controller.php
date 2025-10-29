@@ -134,4 +134,20 @@ class MY_Controller extends CI_Controller
 
         $this->load->vars($aVars);
     }
+
+    /**
+     * 허가되지 않은 HTTP 메서드로 요청 보낼 때 반영
+     */
+    protected function deny(array $allowed)
+    {
+        $this->output
+            ->set_status_header(405)
+            ->set_header('Allow: ' . implode(', ', $allowed))
+            ->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode([
+                'status' => 'error',
+                'error'  => ['code' => 'METHOD_NOT_ALLOWED', 'message' => '허용된 메서드만 사용할 수 있습니다.'],
+            ], JSON_UNESCAPED_UNICODE));
+        return; // CI 컨벤션상 return으로 종료
+    }
 }

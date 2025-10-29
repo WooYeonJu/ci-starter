@@ -32,10 +32,6 @@ class Post extends MY_Controller
     // 게시글 목록 출력
     public function list()
     {
-
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
-
         // 몇 번째 페이지 보여줄지 -> 없으면 기본값 1
         $page = (int)$this->input->get('page') ?: 1;
 
@@ -86,10 +82,6 @@ class Post extends MY_Controller
     // 게시글 상세 조회 + 첨부파일까지 함께 조회
     public function detail($post_id)
     {
-
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
-
         $post_id = (int)$post_id;
 
         // 게시물 조회(is_deleted가 false인 것만)
@@ -133,10 +125,6 @@ class Post extends MY_Controller
     // 게시글 작성 페이지 이동
     public function create()
     {
-
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
-
         // 카테고리 목록 조회
         $categories = $this->posts->get_categories();
 
@@ -152,8 +140,6 @@ class Post extends MY_Controller
     // 게시글 작성 함수
     public function do_create()
     {
-        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
-
         $this->form_validation->set_rules('category_id', '카테고리', 'required|integer');
         $this->form_validation->set_rules('title', '제목', 'trim|required|min_length[1]|max_length[200]');
         $this->form_validation->set_rules('detail', '내용', 'trim|required');
@@ -231,9 +217,6 @@ class Post extends MY_Controller
     // // 게시글 작성(POST)
     // public function do_create()
     // {
-    //     // HTTP 요청이 POST 요청이 아닌 경우 거부
-    //     if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
-
     //     // 입력값 유효성 검사
     //     $this->form_validation->set_rules('category_id', '카테고리', 'required|integer');
     //     $this->form_validation->set_rules('title', '제목', 'trim|required|min_length[1]|max_length[200]');
@@ -439,10 +422,6 @@ class Post extends MY_Controller
     // 파일 다운로드 함수
     public function download($file_id)
     {
-
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
-
         $file_id = (int)$file_id;
 
         // 파일 정보 조회
@@ -481,10 +460,6 @@ class Post extends MY_Controller
     // 수정 화면 출력
     public function edit($post_id)
     {
-
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
-
         $post_id = (int)$post_id;
 
         // 해당 게시글이 없으면 404
@@ -510,8 +485,6 @@ class Post extends MY_Controller
     // 수정 처리
     public function do_edit($post_id)
     {
-        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
-
         $post_id = (int)$post_id;
         $post = $this->posts->get_post($post_id);
         if (!$post) show_404();
@@ -633,9 +606,6 @@ class Post extends MY_Controller
     // // 수정 처리
     // public function do_edit($post_id)
     // {
-    //     // HTTP 요청이 POST 요청이 아닌 경우 거부
-    //     if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
-
     //     $post_id = (int)$post_id;
     //     $post = $this->posts->get_post($post_id);
     //     if (!$post) show_404();
@@ -725,9 +695,6 @@ class Post extends MY_Controller
     // 삭제(소프트 delete - is_deleted 변수를 true로)
     public function delete($post_id)
     {
-        // HTTP 요청이 POST 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
-
         // 해당하는 포스트가 없는 경우
         $post_id = (int)$post_id;
         $post = $this->posts->get_post($post_id);

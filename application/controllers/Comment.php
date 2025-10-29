@@ -27,14 +27,20 @@ class Comment extends MY_Controller
     // 해당 게시글의 댓글 조회(상위 n개)
     public function list_json($post_id)
     {
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
-
         $post_id   = (int)$post_id;
+        if ($post_id <= 0) {
+            return $this->output->set_status_header(400)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode([
+                    'status' => 'error',
+                    'error'  => ['code' => 'BAD_REQUEST', 'message' => 'post_id가 유효하지 않습니다.']
+                ], JSON_UNESCAPED_UNICODE));
+        }
         // 이전 조회 마지막 댓글 path 이후부터 가져오겠다는 뜻
         $afterPath = $this->params['afterPath'] ?? '';
         // 한 번에 가져올 갯수 제한 200개
         $limit     = (int)($this->params['limit'] ?? 10);
+        if ($limit < 1) $limit = 1;
         if ($limit > 500) $limit = 500; // 안전 상한
 
         // 모델에서 limit+1로 가져와 hasMore(데이터가 더 있는지)/nextCursor(다음에 불러올 첫번째 애 경로) 계산
@@ -99,9 +105,6 @@ class Comment extends MY_Controller
     /** 댓글 작성 */
     public function create()
     {
-        // HTTP 요청이 POST 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
-
         // AJAX(Asynchronous JavaScript And XML) 응답 
         // = 페이지를 새로고침하지 않고 서버에 요청을 보내고 응답을 받는 기술
         // = HTML 페이지 전체가 아니라 데이터(JSON, 텍스트 등)만 반환하는 응답

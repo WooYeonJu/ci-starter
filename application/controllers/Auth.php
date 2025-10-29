@@ -14,10 +14,6 @@ class Auth extends MY_Controller
     // 로그인 화면으로 이동
     public function login()
     {
-
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
-
         // 이미 로그인 상태면 메인으로
         if ($this->session->userdata('user')) {
             return redirect('/post'); // 이미 로그인 된 상태라면 post 페이지로 이동
@@ -28,9 +24,6 @@ class Auth extends MY_Controller
     // 로그인 (POST)
     public function do_login()
     {
-
-        // HTTP 요청이 POST 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
 
         // 입력값 검증 - 공백 제거
         $this->form_validation->set_rules('login_id', 'Login ID', 'trim|required');
@@ -60,6 +53,7 @@ class Auth extends MY_Controller
         // login_id(로그인용 아이디값 - string)
         // name(사용자 이름)
         // logged_in_at(로그인 시각)
+        $this->session->sess_regenerate(TRUE);
         $this->session->set_userdata('user', array(
             'user_id' => (int)$user->user_id,
             'name'    => $user->name,
@@ -74,9 +68,6 @@ class Auth extends MY_Controller
     public function logout()
     {
 
-        // HTTP 요청이 POST 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
-
         // 세션 삭제
         $this->session->sess_destroy();
         return redirect('auth/login');
@@ -85,9 +76,6 @@ class Auth extends MY_Controller
     // 회원가입 폼
     public function register()
     {
-
-        // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
 
 
         if ($this->session->userdata('user')) {
@@ -99,9 +87,6 @@ class Auth extends MY_Controller
     // 회원가입 요청(POST)
     public function do_register()
     {
-
-        // HTTP 요청이 POST 요청이 아닌 경우 거부
-        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
 
         // 유효성 검사
         $this->form_validation->set_rules(
@@ -178,6 +163,7 @@ class Auth extends MY_Controller
         log_message('info', '회원가입 성공: user_id=' . $result['user_id'] . ' login_id=' . $login_id);
 
         // 가입 후 자동 로그인
+        $this->session->sess_regenerate(TRUE);
         $this->session->set_userdata('user', array(
             'user_id' => (int)$result['user_id'],
             'name'    => $name,
