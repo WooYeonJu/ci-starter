@@ -15,13 +15,12 @@ class MY_Controller extends CI_Controller
         $this->params = $this->getParams();
         $this->cookies = $this->getCookies();
 
-            // 로그인 유저 전역 주입
+        // 로그인 유저 전역 주입
         $me = $this->session->userdata('user') ?: [];
         $this->load->vars([
             'auth_user' => $me,
             'user_name' => isset($me['user_name']) ? $me['user_name'] : (isset($me['name']) ? $me['name'] : ''),
         ]);
-
     }
 
     protected function render($view, $data = [])
@@ -29,7 +28,7 @@ class MY_Controller extends CI_Controller
 
         // 로그인/회원가입 컨트롤러는 레이아웃 스킵
         $class = $this->router->fetch_class();
-        $skip = in_array($class, ['auth','login','register']);
+        $skip = in_array($class, ['auth', 'login', 'register']);
 
         if ($this->use_layout && !$skip) {
             $this->load->view('template/header', $data);
