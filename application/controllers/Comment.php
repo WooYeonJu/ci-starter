@@ -10,7 +10,7 @@ class Comment extends MY_Controller
         $this->load->helper(['form', 'url']);
     }
 
-    // /** 게시물의 댓글을 조회 */
+    // /** 게시물의 댓글 전체 조회 */
     // public function list($post_id)
     // {
     //     $post_id   = (int)$post_id;
@@ -24,8 +24,12 @@ class Comment extends MY_Controller
     //     $this->load->view('comment/list');
     // }
 
+    // 해당 게시글의 댓글 조회(상위 n개)
     public function list_json($post_id)
     {
+        // HTTP 요청이 GET 요청이 아닌 경우 거부
+        if($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
+
         $post_id   = (int)$post_id;
         // 이전 조회 마지막 댓글 path 이후부터 가져오겠다는 뜻
         $afterPath = $this->params['afterPath'] ?? '';
@@ -33,12 +37,13 @@ class Comment extends MY_Controller
         $limit     = (int)($this->params['limit'] ?? 10);
         if ($limit > 500) $limit = 500; // 안전 상한
 
-        // 모델에서 limit+1로 가져와 hasMore/nextCursor 계산
+        // 모델에서 limit+1로 가져와 hasMore(데이터가 더 있는지)/nextCursor(다음에 불러올 첫번째 애 경로) 계산
         $page = $this->comment->get_by_post_page_fetch_plus($post_id, $afterPath, $limit);
 
         // 아이템 조각만 렌더 (부분뷰: comment/_items.php)
         $html = $this->load->view('comment/_items', ['comments' => $page['items']], TRUE);
 
+        // json으로 반환값 변환
         return $this->output->set_content_type('application/json','utf-8')
             ->set_output(json_encode([
                 'status'     => 'success',
@@ -48,52 +53,54 @@ class Comment extends MY_Controller
             ], JSON_UNESCAPED_UNICODE));
     }
 
+    // /** 특정 댓글의 직계 자식 댓글만 조회해서 가져오는 함수 */
+    // public function children()
+    // {
+    //     $parent_id   = (int)($this->params['parent_id'] ?? 0);
+    //     $lastCreated = $this->params['lastCreated'] ?? null;    // 작성일
+    //     $limit       = (int)($this->params['limit'] ?? 50);     // 한 번에 가져올 개수(default: 50)
 
+    //     try {
+    //         // db 조회
+    //         $rows = $this->comment->get_children_page($parent_id, $lastCreated, $lastId, $limit);
+    //         return $this->output
+    //             ->set_content_type('application/json','utf-8')
+    //             ->set_output(json_encode(['status'=>'success','rows'=>$rows], JSON_UNESCAPED_UNICODE));
+    //     } catch (Throwable $e) {
+    //         // 오류 발생 시
+    //         // 로그 기록
+    //         log_message('error', 'children error: '.$e->getMessage());
+    //         return $this->output->set_status_header(500)
+    //             ->set_content_type('application/json','utf-8')
+    //             ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
+    //     }
+    // }
 
-    /** parent_id의 직계 자식만 페이지네이션 (작성일 오름차순) */
-    public function children()
-    {
-        $parent_id   = (int)($this->params['parent_id'] ?? 0);
-        $lastCreated = $this->params['lastCreated'] ?? null; // 'YYYY-mm-dd HH:ii:ss'
-        $lastId      = (int)($this->params['lastId'] ?? 0);
-        $limit       = (int)($this->params['limit'] ?? 50);
+    // /** 특정 루트 스레드 전위순서 스트리밍 (path 커서 기반) */
+    // public function thread($root_id)
+    // {
+    //     $root_id   = (int)$root_id;
+    //     $afterPath = $this->params['afterPath'] ?? '';
+    //     $limit     = (int)($this->params['limit'] ?? 200);
 
-        try {
-            $rows = $this->comment->get_children_page($parent_id, $lastCreated, $lastId, $limit);
-            return $this->output
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'success','rows'=>$rows], JSON_UNESCAPED_UNICODE));
-        } catch (Throwable $e) {
-            log_message('error', 'children error: '.$e->getMessage());
-            return $this->output->set_status_header(500)
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
-        }
-    }
-
-    /** 특정 루트 스레드 전위순서 스트리밍 (path 커서 기반) */
-    public function thread($root_id)
-    {
-        $root_id   = (int)$root_id;
-        $afterPath = $this->params['afterPath'] ?? '';
-        $limit     = (int)($this->params['limit'] ?? 200);
-
-        try {
-            $rows = $this->comment->get_thread_page($root_id, $afterPath, $limit);
-            return $this->output
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'success','rows'=>$rows], JSON_UNESCAPED_UNICODE));
-        } catch (Throwable $e) {
-            log_message('error', 'thread error: '.$e->getMessage());
-            return $this->output->set_status_header(500)
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
-        }
-    }
+    //     try {
+    //         $rows = $this->comment->get_thread_page($root_id, $afterPath, $limit);
+    //         return $this->output
+    //             ->set_content_type('application/json','utf-8')
+    //             ->set_output(json_encode(['status'=>'success','rows'=>$rows], JSON_UNESCAPED_UNICODE));
+    //     } catch (Throwable $e) {
+    //         log_message('error', 'thread error: '.$e->getMessage());
+    //         return $this->output->set_status_header(500)
+    //             ->set_content_type('application/json','utf-8')
+    //             ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
+    //     }
+    // }
 
     /** 댓글 작성 */
     public function create()
     {
+        // HTTP 요청이 POST 요청이 아닌 경우 거부
+        if($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
 
         // AJAX(Asynchronous JavaScript And XML) 응답 
         // = 페이지를 새로고침하지 않고 서버에 요청을 보내고 응답을 받는 기술
