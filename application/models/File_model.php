@@ -5,9 +5,9 @@ class File_model extends MY_Model
 {
     private $table = 'file';
 
+    // 파일 추가 함수
     public function insert_file($post_id, $data)
     {
-        // $data: original_name, stored_name, path, mime_type, size_bytes
         $sql = self::getInsertQuery($this->table, [
             'post_id'       => (int)$post_id,
             'original_name' => $data['original_name'],

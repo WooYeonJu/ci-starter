@@ -18,7 +18,11 @@
       <span class="welcome">
         <?= isset($user_name) ? html_escape($user_name) : '' ?>님 환영합니다!
       </span>
-      <a href="/logout" class="logout-btn">로그아웃</a>
+      <!-- POST 요청으로 전송하기 위해 버튼으로 구현 -->
+      <form action="<?= site_url('logout'); ?>" method="post" class="logout-form">
+        <button type="submit" class="logout-btn">로그아웃</button>
+      </form>
+
     </nav>
   </div>
 </header>

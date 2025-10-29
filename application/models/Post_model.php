@@ -14,7 +14,7 @@ class Post_model extends MY_Model
         $page      = max(1, (int)$page);
         $per_page  = max(1, (int)$per_page);
         $offset    = ($page - 1) * $per_page;
-        $where     = "p.is_deleted = 0";
+        $where     = "p.is_deleted = 0";    // is_deleted가 false인것만
 
         // 카테고리 분류
         if (!empty($category_id)) {
@@ -125,17 +125,92 @@ class Post_model extends MY_Model
         return $this->excute($sql, 'exec');
     }
 
-    // 파일 1건 삭제(메타 반환해서 컨트롤러에서 unlink)
+    // 파일 1건 조회
     public function get_file($file_id) {
         $file_id = (int)$file_id;
         return $this->excute("SELECT * FROM file WHERE file_id = {$file_id} LIMIT 1",'row');
     }
+
+    // 특정 파일 하나만 삭제
     public function delete_file_row($file_id) {
         $sql = self::getDeleteQuery('file', ['file_id' => (int)$file_id]);
         return $this->excute($sql, 'exec');
     }
 
+    // 게시글 생성 과정 중 db에 파일 경로 저장까지 완료된 후 임시 폴더에서 최종 폴더로 이동 과정에서 오류 난 경우 파일 및 포스트 삭제
+    public function delete_post_cascade($post_id)
+    {
+        $post_id = (int)$post_id;
+        if ($post_id <= 0) return false;
 
+        // 게시글 존재 유무 빠른 체크
+        $exists = $this->db
+            ->select('post_id')
+            ->from($this->table)
+            ->where('post_id', $post_id)
+            ->limit(1)
+            ->get()->row();
+        if (!$exists) return true; // 이미 없으면 성공으로 간주
 
+        // 삭제 대상 파일 메타 선조회 (커밋 후 실제 파일 삭제에 사용)
+        $file_rows = $this->files->get_by_post_id($post_id); // 아래 Files_model 참고
+
+        // 2) 트랜잭션 시작
+        $this->db->trans_begin();
+
+        // 2-1) 파일 메타 레코드 삭제
+        $this->db->where('post_id', $post_id)->delete($this->files->getTable()); // files 테이블명 사용
+        // 2-2) 게시글 삭제
+        $this->db->where('post_id', $post_id)->delete($this->table);
+
+        // 3) 트랜잭션 종료
+        if ($this->db->trans_status() === FALSE) {
+            $err = $this->db->error(); // ['code'=>..., 'message'=>...]
+            $this->db->trans_rollback();
+            log_message('error', 'delete_post_cascade DB 롤백: post_id='.$post_id.' err='.json_encode($err));
+            return false;
+        }
+
+        $this->db->trans_commit();
+
+        // 4) 실제 파일 삭제 (커밋 후 시도) — 실패해도 DB는 이미 정리됨
+        $base_uploads     = FCPATH.'uploads/';
+        $base_uploads_tmp = FCPATH.'uploads_tmp/';
+
+        foreach ($file_rows as $row) {
+            // 저장명/경로 방어적 처리
+            $stored = isset($row->stored_name) ? basename($row->stored_name) : null;
+            if (!$stored) {
+                // path 컬럼만 있는 스키마라면 path에서 파일명 추출 시도
+                if (!empty($row->path)) {
+                    $stored = basename($row->path);
+                }
+            }
+            if (!$stored) continue;
+
+            // 업로드/임시 양쪽 모두 시도 (어느 쪽에 있든 삭제되게)
+            $candidates = [
+                $base_uploads.$stored,
+                $base_uploads_tmp.$stored,
+            ];
+
+            foreach ($candidates as $absPath) {
+                // 경로 공격 방지: 프로젝트 루트 밖으로 나가지 않도록 간단 보정
+                if (strpos(realpath(dirname($absPath)) ?: '', realpath(FCPATH)) !== 0) {
+                    log_message('error', 'delete_post_cascade: 비정상 경로 감지 skip='.$absPath);
+                    continue;
+                }
+                if (is_file($absPath)) {
+                    if (!@unlink($absPath)) {
+                        log_message('error', 'delete_post_cascade: 파일 삭제 실패 '.$absPath.' (post_id='.$post_id.')');
+                    } else {
+                        log_message('debug', 'delete_post_cascade: 파일 삭제 ok '.$absPath.' (post_id='.$post_id.')');
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 
 }
