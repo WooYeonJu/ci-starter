@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 class Comment extends MY_Controller
 {
@@ -28,7 +28,7 @@ class Comment extends MY_Controller
     public function list_json($post_id)
     {
         // HTTP 요청이 GET 요청이 아닌 경우 거부
-        if($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
+        if ($this->input->method(TRUE) !== 'GET') return $this->deny(['GET']);
 
         $post_id   = (int)$post_id;
         // 이전 조회 마지막 댓글 path 이후부터 가져오겠다는 뜻
@@ -44,7 +44,7 @@ class Comment extends MY_Controller
         $html = $this->load->view('comment/_items', ['comments' => $page['items']], TRUE);
 
         // json으로 반환값 변환
-        return $this->output->set_content_type('application/json','utf-8')
+        return $this->output->set_content_type('application/json', 'utf-8')
             ->set_output(json_encode([
                 'status'     => 'success',
                 'html'       => $html,
@@ -100,14 +100,14 @@ class Comment extends MY_Controller
     public function create()
     {
         // HTTP 요청이 POST 요청이 아닌 경우 거부
-        if($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
+        if ($this->input->method(TRUE) !== 'POST') return $this->deny(['POST']);
 
         // AJAX(Asynchronous JavaScript And XML) 응답 
         // = 페이지를 새로고침하지 않고 서버에 요청을 보내고 응답을 받는 기술
         // = HTML 페이지 전체가 아니라 데이터(JSON, 텍스트 등)만 반환하는 응답
 
         // php 오류 출력 비활성화 -> AJAX로 요청할 때 php 경고 등이 응답 본문에 출력되어 json을 깨트리는 일 방지
-        @ini_set('display_errors', 0); 
+        @ini_set('display_errors', 0);
         // php 에러 보고 중 CI3의 오래된 문법에서 발생하는 경고는 무시
         @error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
@@ -123,14 +123,14 @@ class Comment extends MY_Controller
         // 사용자 아이디가 비어있는 경우 401 에러 처리
         if (!$user_id) {
             return $this->output->set_status_header(401)
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'error','message'=>'로그인이 필요합니다'], JSON_UNESCAPED_UNICODE));
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => '로그인이 필요합니다'], JSON_UNESCAPED_UNICODE));
         }
         // 포스트 아이디 혹은 댓글 내용이 비어있는 경우 500 에러
         if (!$post_id || $detail === '') {
             return $this->output->set_status_header(400)
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'error','message'=>'잘못된 요청입니다'], JSON_UNESCAPED_UNICODE));
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => '잘못된 요청입니다'], JSON_UNESCAPED_UNICODE));
         }
 
         // 댓글 저장 시도
@@ -139,16 +139,15 @@ class Comment extends MY_Controller
 
             // 성공 시 AJAX 요청에 대한 응답으로 JSON 형식의 응답 반환
             return $this->output
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'success','comment_id'=>$new_id], JSON_UNESCAPED_UNICODE));
-
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'success', 'comment_id' => $new_id], JSON_UNESCAPED_UNICODE));
         } catch (Throwable $e) {
             // 오류 발생 시 로그 기록
-            log_message('error', 'comment/create failed: '.$e->getMessage());
+            log_message('error', 'comment/create failed: ' . $e->getMessage());
             // http 응답 코드 500으로 설정하여 전송
             return $this->output->set_status_header(500)
-                ->set_content_type('application/json','utf-8')
-                ->set_output(json_encode(['status'=>'error','message'=>'서버 오류'], JSON_UNESCAPED_UNICODE));
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => '서버 오류'], JSON_UNESCAPED_UNICODE));
         }
     }
 }

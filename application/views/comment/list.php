@@ -21,6 +21,8 @@
     <ul id="comment-list" class="comment-list" style="list-style:none; padding-left:0;">
       <?php $this->load->view('comment/_items', ['comments' => $comments]); ?>
     </ul>
+    <!-- 스크롤 끝 확인용 -->
+    <div id="cmt-sentinel" style="height:1px;"></div>
   </div>
 <?php else: ?>
   <p>아직 댓글이 없습니다.</p>
@@ -28,72 +30,85 @@
 
 <script>
   const postId = <?= (int)$this->uri->segment(3) ?>;
-
-  // 커서
-  let afterPath = (function() {
-    const last = document.querySelector('#comment-list .comment-item:last-child');
-    return last ? last.dataset.path : '';
-  })();
+  let afterPath = (document.querySelector('#comment-list .comment-item:last-child')?.dataset.path) || '';
   let loading = false;
-  let hasMore = true;
+  // 초기 서버렌더링에서 0개라면 더 불러올 데이터도 없음(커서 기반 페이징 가정)
+  let hasMore = <?= !empty($comments) ? 'true' : 'false' ?>;
 
-  // 루트ID => HSL hue 캐시
-  const hueByRoot = new Map();
+  // AbortController: 이전 요청이 남아 있으면 취소
+  let inflight = null;
 
-  function hue(id) {
-    if (hueByRoot.has(id)) return hueByRoot.get(id);
-    let h = 0;
-    String(id).split('').forEach(ch => h = (h * 31 + ch.charCodeAt(0)) % 360);
-    hueByRoot.set(id, h);
-    return h;
-  }
-
-  // depth/hue 적용 (선 관련 변수 제거)
   function applyDepthColors(scope = document) {
     scope.querySelectorAll('.comment-item').forEach(el => {
       const d = Number(el.dataset.depth || 0);
       el.style.setProperty('--depth', d);
     });
   }
-
-  // 초기 1회 적용
   applyDepthColors();
 
-  // 무한 스크롤 로더
   async function loadComments() {
     if (loading || !hasMore) return;
     loading = true;
+
+    // 관찰을 잠시 중단(중복 트리거 방지)
+    io.unobserve(sentinel);
+
+    // 이전 요청 취소
+    if (inflight) inflight.abort();
+    inflight = new AbortController();
+
     try {
       const params = new URLSearchParams({
         afterPath,
         limit: 10
       });
       const res = await fetch(`/comment/list_json/${postId}?` + params.toString(), {
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        signal: inflight.signal
       });
       const data = await res.json();
       if (data.status !== 'success') throw new Error('load fail');
 
       const list = document.querySelector('#comment-list');
       list.insertAdjacentHTML('beforeend', data.html);
-
-      // 방금 붙인 조각에만 적용
       applyDepthColors(list);
 
       afterPath = data.nextCursor || afterPath;
       hasMore = !!data.hasMore;
+
+      // 더 가져올 게 있으면 다시 관찰(없으면 그대로 중단)
+      if (hasMore) io.observe(sentinel);
     } catch (e) {
-      console.error(e);
+      if (e.name !== 'AbortError') console.error(e);
+      // 에러 시에도 센티널 복구(원한다면 재시도 정책을 두세요)
+      if (hasMore) io.observe(sentinel);
     } finally {
       loading = false;
+      inflight = null;
     }
   }
 
-  // 스크롤이 바닥 근처면 더 불러오기
-  window.addEventListener('scroll', () => {
-    const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 120;
-    if (nearBottom) loadComments();
+  // IO 설정: rootMargin으로 미리 로드
+  const sentinel = document.getElementById('cmt-sentinel');
+  const io = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    loadComments();
+  }, {
+    root: null,
+    rootMargin: '200px',
+    threshold: 0
   });
+
+  // 초기 댓글이 0개면 관찰 자체를 안 붙임(= 무한 호출 방지)
+  if (hasMore) io.observe(sentinel);
+
+  // 선택: 페이지가 너무 짧아 스크롤이 없는 경우 1회만 프리로드
+  window.addEventListener('load', () => {
+    if (hasMore && document.documentElement.scrollHeight <= window.innerHeight + 1) {
+      loadComments(); // 1회만
+    }
+  });
+
 
   // 답글 폼 show/hide
   document.addEventListener('click', (e) => {
