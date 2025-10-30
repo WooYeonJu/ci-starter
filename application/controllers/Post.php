@@ -8,7 +8,7 @@ class Post extends MY_Controller
     {
         parent::__construct();
 
-        $this->load->view('template/header', ['title' => '게시글 목록']);
+        // $this->load->view('template/header', ['title' => '게시글 목록']);
 
         $this->load->model('Post_model', 'posts');      // 게시물 모델 로드
         $this->load->model('File_model', 'files');      // 파일 모델 로드
@@ -61,22 +61,102 @@ class Post extends MY_Controller
             'q'           => $q,
         ]);
 
-        // 조회된 데이터 기반 뷰로 전송해줄 데이터 생성
+
+        // 페이지 계산은 기존 로직 유지
+        $total_pages = max(1, (int)ceil($result['total'] / $per_page));
+        $pages = [1, max(1, $page - 1), $page, min($total_pages, $page + 1), $total_pages];
+        $pages = array_values(array_unique(array_filter($pages, function ($p) use ($total_pages) {
+            return $p >= 1 && $p <= $total_pages;
+        })));
+        sort($pages);
+
+        $pages_view = [];
+        $prev = null;
+        $push_sep = function () use (&$pages_view) {
+            $pages_view[] = ['type' => 'sep'];
+        };
+        foreach ($pages as $p) {
+            if ($prev !== null) {
+                if ($p - $prev > 1) {
+                    $push_sep();                       // |
+                    $pages_view[] = ['type' => 'ellipsis']; // …
+                    $push_sep();                       // |
+                } else {
+                    $push_sep();                       // |
+                }
+            }
+
+            $pages_view[] = [
+                'type'    => 'num',
+                'n'       => $p,
+                'current' => ($p == $page),
+            ];
+            $prev = $p;
+        }
+
+        // 카테고리도 selected 플래그 미리 계산 (경계값 대비)
+        $category_id_val = ($category_id === null) ? '' : (string)$category_id;
+        $categories_view = array_map(function ($c) use ($category_id_val) {
+            $cid = (string)$c['category_id'];
+            return [
+                'category_id'   => $cid,
+                'category_name' => $c['category_name'],
+                'selected'      => ($category_id_val !== '' && $category_id_val === $cid),
+            ];
+        }, $categories);
+
+        // 템플릿 전달
         $data = [
             'title'        => '게시글 목록',
             'rows'         => $result['rows'],
             'total'        => $result['total'],
             'page'         => $page,
             'per_page'     => $per_page,
-            'total_pages'  => max(1, (int)ceil($result['total'] / $per_page)),
-            'categories'   => $categories,
+            'total_pages'  => $total_pages,
+            'categories'   => $categories_view,   // ← 가공본
             'category_id'  => $category_id,
             'q'            => $q,
-            'qs'           => $qs, // 페이징 링크에서 사용
+            'qs'           => $qs,
+            'pages'        => $pages_view,        // ← 가공본
         ];
 
+        $this->template_->viewDefine('layout_common', 'post/list.tpl');
+        $this->optimizer->setCss('post.css');
+        $this->template_->viewAssign($data);
+
+
+        // $total_pages = max(1, (int)ceil($result['total'] / $per_page));
+
+        // $pages = [1, max(1, $page - 1), $page, min($total_pages, $page + 1), $total_pages];
+        // $pages = array_values(array_unique(array_filter($pages, function ($p) use ($total_pages) {
+        //     return $p >= 1 && $p <= $total_pages;
+        // })));
+        // sort($pages);
+
+        // // 조회된 데이터 기반 뷰로 전송해줄 데이터 생성
+        // $data = [
+        //     'title'        => '게시글 목록',
+        //     'rows'         => $result['rows'],
+        //     'total'        => $result['total'],
+        //     'page'         => $page,
+        //     'per_page'     => $per_page,
+        //     'total_pages'  => max(1, (int)ceil($result['total'] / $per_page)),
+        //     'categories'   => $categories,
+        //     'category_id'  => $category_id,
+        //     'q'            => $q,
+        //     'qs'           => $qs, // 페이징 링크에서 사용
+        //     'pages'        => $pages,
+        // ];
+
+        // $this->template_->viewDefine('layout_common', 'post/list.tpl');
+
+        // // Optimizer로 CSS 주입
+        // $this->optimizer->setCss('post.css');
+        // $this->template_->viewAssign($data);
+
+
         // 뷰 로드
-        $this->load->view('post/list', $data);
+        // $this->load->view('post/list', $data);
     }
 
     // 게시글 상세 조회 + 첨부파일까지 함께 조회

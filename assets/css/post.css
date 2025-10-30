@@ -1,8 +1,13 @@
 /* post.css — 목록/검색/페이징 공용 */
 
 /* 레이아웃 */
-.wrap { max-width: 1000px; margin: 0 auto; }
-.main-content { padding-top: 24px; }
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.main-content {
+  padding-top: 24px;
+}
 
 /* ───── List Header (제목 + 작성 버튼) ───── */
 .list-header {
@@ -35,7 +40,6 @@
   background: #0056b3;
 }
 
-
 /* 제목 */
 h3 {
   margin: 0 0 16px;
@@ -55,13 +59,16 @@ a[href="/post/create"] /* 기존 마크업 호환용 */ {
   color: #fff !important;
   text-decoration: none;
   font-size: 0.95rem;
-  transition: background .2s, transform .02s;
+  transition: background 0.2s, transform 0.02s;
 }
 .create-btn:hover,
-a[href="/post/create"]:hover { background: #0056b3; }
+a[href="/post/create"]:hover {
+  background: #0056b3;
+}
 .create-btn:active,
-a[href="/post/create"]:active { transform: translateY(1px); }
-
+a[href="/post/create"]:active {
+  transform: translateY(1px);
+}
 
 /* ───── Toolbar (검색/필터) ───── */
 .toolbar {
@@ -87,7 +94,7 @@ a[href="/post/create"]:active { transform: translateY(1px); }
 .toolbar input[type="text"]:focus,
 .toolbar select:focus {
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0,123,255,.15);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
   outline: none;
 }
 
@@ -100,12 +107,17 @@ a[href="/post/create"]:active { transform: translateY(1px); }
   color: #fff;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background .2s;
+  transition: background 0.2s;
 }
-.toolbar button[type="submit"]:hover { background: #0056b3; }
+.toolbar button[type="submit"]:hover {
+  background: #0056b3;
+}
 
 /* flex:1 필드 (제목 검색) */
-.toolbar input[name="q"] { flex: 1; min-width: 240px; }
+.toolbar input[name="q"] {
+  flex: 1;
+  min-width: 240px;
+}
 
 /* ───── Table (목록) ───── */
 table {
@@ -115,7 +127,7 @@ table {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 thead th {
@@ -136,30 +148,57 @@ tbody td {
   font-size: 0.95rem;
 }
 
-tbody tr:hover { background: #f9fbff; }
+tbody tr:hover {
+  background: #f9fbff;
+}
 
 /* 제목 링크 */
 tbody td a {
   color: #111827;
   text-decoration: none;
 }
-tbody td a:hover { color: #007bff; text-decoration: underline; }
+tbody td a:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
 
 /* 빈 목록 메시지 */
-tbody td[colspan="3"] { text-align: center; color: #6b7280; }
+tbody td[colspan="3"] {
+  text-align: center;
+  color: #6b7280;
+}
 
 /* ───── Responsive ───── */
 @media (max-width: 640px) {
-  .main-content { padding: 20px; }
-  thead { display: none; }
-  table, tbody, tr, td { display: block; width: 100%; }
-  tbody tr { border-bottom: 1px solid #eef2f7; }
-  tbody td { padding: 10px 12px; }
-  tbody td:nth-child(1) { font-weight: 600; margin-bottom: 6px; }
+  .main-content {
+    padding: 20px;
+  }
+  thead {
+    display: none;
+  }
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+  }
+  tbody tr {
+    border-bottom: 1px solid #eef2f7;
+  }
+  tbody td {
+    padding: 10px 12px;
+  }
+  tbody td:nth-child(1) {
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
   tbody td:nth-child(2),
-  tbody td:nth-child(3) { color: #6b7280; font-size: 0.9rem; }
+  tbody td:nth-child(3) {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
 }
-
 
 /* Compact pager: < 1 | 2 | 3 | … | N > */
 .pager--compact {
@@ -176,8 +215,12 @@ tbody td[colspan="3"] { text-align: center; color: #6b7280; }
   padding: 2px 4px;
 }
 
-.pager--compact a { color: #374151; }
-.pager--compact a:hover { color: #007bff; }
+.pager--compact a {
+  color: #374151;
+}
+.pager--compact a:hover {
+  color: #007bff;
+}
 
 .pager--compact .current {
   background: #007bff;
@@ -186,8 +229,17 @@ tbody td[colspan="3"] { text-align: center; color: #6b7280; }
   padding: 4px 8px;
 }
 
-.pager--compact .ellipsis { color: #9aa3af; }
-.pager--compact .sep { color: #d1d5db; }
+.pager--compact .ellipsis {
+  color: #9aa3af;
+}
+.pager--compact .sep {
+  color: #d1d5db;
+}
 
-.pager--compact .pager-nav { font-weight: 600; }
-.pager--compact .pager-nav.disabled { color: #c7cdd6; pointer-events: none; }
+.pager--compact .pager-nav {
+  font-weight: 600;
+}
+.pager--compact .pager-nav.disabled {
+  color: #c7cdd6;
+  pointer-events: none;
+}

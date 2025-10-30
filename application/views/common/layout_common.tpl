@@ -2,27 +2,27 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- 페이지 타이틀: 컨트롤러에서 'title' 지정 시 사용 -->
   <title>{? isset(title) && title}{= title }{:}사이트 제목{/}</title>
 
   {? isset(css_optimizer) && css_optimizer }{= css_optimizer }{/}
+
 </head>
 <body>
 
-  <!-- 전역 헤더 (정의된 경우에만 출력) -->
-  {? this->viewDefined('layout_header')} {# layout_header } {/}
+  <div id="wrap">
+    <!-- 전역 헤더: 래퍼 내부로 이동 -->
+  {? this->viewDefined('layout_header')}
+    {# layout_header }
+  {/}
 
-  <div id="wrap" style="display:flex; gap:0; min-height:100vh;">
-
-    <!-- 본문 영역 -->
-    <main id="content" role="main" style="flex:1;">
-      <!-- 각 페이지 컨텐츠 슬롯 -->
-      {? this->viewDefined('layout_common')}
-        {# layout_common }
-      {/}
+    <!-- 본문 -->
+    <main id="content" role="main">
+      <div class="main-content">
+        {? this->viewDefined('layout_common')}
+          {# layout_common }
+        {/}
+      </div>
     </main>
   </div>
 

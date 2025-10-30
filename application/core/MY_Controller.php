@@ -30,15 +30,15 @@ class MY_Controller extends CI_Controller
         $class = $this->router->fetch_class();
         $skip = in_array($class, ['auth', 'login', 'register']);
 
-        if ($this->use_layout && !$skip) {
-            $this->load->view('template/header', $data);
-        }
+        // if ($this->use_layout && !$skip) {
+        //     $this->load->view('template/header', $data);
+        // }
 
         $this->load->view($view, $data);
 
-        if ($this->use_layout && !$skip) {
-            $this->load->view('template/footer', $data);
-        }
+        // if ($this->use_layout && !$skip) {
+        //     $this->load->view('template/footer', $data);
+        // }
     }
 
     private function getParams()

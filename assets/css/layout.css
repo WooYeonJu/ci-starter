@@ -1,6 +1,6 @@
 /* 공통 폰트 / 배경 */
 body {
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   background-color: #f4f6f8;
   margin: 0;
 }
@@ -9,7 +9,7 @@ body {
 .site-header {
   background-color: #fff;
   border-bottom: 1px solid #e1e4e8;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   padding: 0 40px;
   height: 60px;
   display: flex;
@@ -55,14 +55,17 @@ body {
 }
 
 /* 헤더의 로그아웃 폼은 인라인로 */
-.header-right form { margin: 0; display: inline; }
+.header-right form {
+  margin: 0;
+  display: inline;
+}
 
 /* 로그아웃 버튼 */
 .logout-btn {
-  border: none;                 /* 기본 테두리 제거 */
-  outline: none;                /* 기본 포커스 링 제거 */
-  box-shadow: none;             /* 일부 브라우저 기본 그림자 제거 */
-  -webkit-appearance: none;     /* iOS/Safari 기본 버튼 모양 제거 */
+  border: none; /* 기본 테두리 제거 */
+  outline: none; /* 기본 포커스 링 제거 */
+  box-shadow: none; /* 일부 브라우저 기본 그림자 제거 */
+  -webkit-appearance: none; /* iOS/Safari 기본 버튼 모양 제거 */
   appearance: none;
   cursor: pointer;
   background-color: #007bff;
@@ -70,24 +73,33 @@ body {
   padding: 6px 14px;
   border-radius: 6px;
   text-decoration: none;
-  font: inherit;                /* 폰트 상속으로 헤더와 동일 */
-  transition: background-color .2s;
+  font: inherit; /* 폰트 상속으로 헤더와 동일 */
+  transition: background-color 0.2s;
 }
 
-.logout-btn:hover { background-color: #0056b3; }
+.logout-btn:hover {
+  background-color: #0056b3;
+}
 
-.logout-form { margin: 0; display: inline; }
-
+.logout-form {
+  margin: 0;
+  display: inline;
+}
 
 /* 접근성 고려: 키보드 포커스 시만 부드러운 하이라이트 */
 .logout-btn:focus-visible {
-  box-shadow: 0 0 0 3px rgba(0,123,255,.25);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
 
 /* 페이지 본문 공통 여백 */
 .main-content {
-  padding: 40px;
+  padding: 10px 40px;
   max-width: 1000px;
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+/* 날짜는 항상 한 줄 */
+.td-date {
+  white-space: nowrap;
 }
