@@ -15,6 +15,7 @@ class MY_Controller extends CI_Controller
         $this->params = $this->getParams();
         $this->cookies = $this->getCookies();
 
+
         // 로그인 유저 전역 주입
         $me = $this->session->userdata('user') ?: [];
         $this->load->vars([

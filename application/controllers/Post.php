@@ -195,9 +195,9 @@ class Post extends MY_Controller
 
         // 이 게시물의 댓글 조회
         // 초기 렌더에서는 기본 10개만 -> 무한 스크롤로 구현
-        $comments = $this->comment->get_by_post_page($post_id, '', 10);
+        $comments = $this->comment->get_by_post_page($post_id, '', 200);
         // 전체 댓글 개수
-        $comment_cnt = count($this->comment->get_by_post($post_id, '', '500'));
+        $comment_cnt = (int)$this->comment->count_by_post($post_id);
 
         // 본문 템플릿
         $this->template_->viewDefine('layout_common', 'post/detail.tpl');

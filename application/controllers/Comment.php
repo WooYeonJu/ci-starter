@@ -46,7 +46,7 @@ class Comment extends MY_Controller
             ? (int)$this->params['limit']
             : (int)$this->input->get('limit', true);
 
-        if ($limit < 1)   $limit = 10;
+        if ($limit < 1)   $limit = 200;
         if ($limit > 500) $limit = 500;
 
         // 커서 기반 페이지 조회 (limit+1 내부 처리로 hasMore/nextCursor 계산)
@@ -184,13 +184,12 @@ class Comment extends MY_Controller
         if (!$post_id || $detail === '') {
             return $this->output->set_status_header(400)
                 ->set_content_type('application/json', 'utf-8')
-                ->set_output(json_encode(['status' => 'error', 'message' => '잘못된 요청입니다'], JSON_UNESCAPED_UNICODE));
+                ->set_output(json_encode(['status' => 'error', 'message' => '댓글을 입력해주세요'], JSON_UNESCAPED_UNICODE));
         }
 
         // 댓글 저장 시도
         try {
             $new_id = $this->comment->create($post_id, $user_id, $detail, $parent_id);
-
             // 성공 시 AJAX 요청에 대한 응답으로 JSON 형식의 응답 반환
             return $this->output
                 ->set_content_type('application/json', 'utf-8')

@@ -57,7 +57,7 @@
       inflight = new AbortController();
 
       try {
-        const params = new URLSearchParams({ afterPath, limit: 10 });
+        const params = new URLSearchParams({ afterPath, limit: 200 });
         const res = await fetch("{= site_url('comment/list_json') }/" + postId + "?" + params.toString(), {
           credentials: 'same-origin',
           signal: inflight.signal
