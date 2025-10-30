@@ -209,3 +209,8 @@ h3 {
     padding: 8px;
   }
 }
+
+.meta,
+.comment-date {
+  white-space: nowrap;
+}

@@ -1,13 +1,12 @@
 <div class="container">
-
   <!-- 제목 -->
   <h2>{= htmlspecialchars(post.title, ENT_QUOTES, 'UTF-8') }</h2>
 
   <!-- 메타 -->
   <div class="meta">
-    {= htmlspecialchars(post.author_name, ENT_QUOTES, 'UTF-8') } |
+    {= htmlspecialchars(post.author_name,   ENT_QUOTES, 'UTF-8') } |
     {= htmlspecialchars(post.category_name, ENT_QUOTES, 'UTF-8') } |
-    {= htmlspecialchars(post.created_at, ENT_QUOTES, 'UTF-8') }
+    {= htmlspecialchars(post.created_at,    ENT_QUOTES, 'UTF-8') }
   </div>
 
   <!-- 본문 -->
@@ -40,7 +39,7 @@
     </ul>
   {/}
 
-  <!-- 댓글 블록 (컨트롤러에서 viewDefine로 끼워넣기) -->
+  <!-- 댓글 블록 -->
   {? this->viewDefined('comments') } {# comments } {/}
 
   <a href="{= site_url('post') }" class="back">← 목록으로</a>

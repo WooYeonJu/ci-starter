@@ -190,15 +190,46 @@ class Post extends MY_Controller
         // 전체 댓글 개수
         $comment_cnt = count($this->comment->get_by_post($post_id, '', '500'));
 
-        // 뷰 로드
-        $this->load->view('post/detail', [
-            'title' => $row['title'],
-            'post'  => $row,
-            'files' => $files,
-            'is_owner'  => $is_owner,
-            'comments' => $comments,
-            'comment_cnt' => $comment_cnt,
+        // 본문 템플릿
+        $this->template_->viewDefine('layout_common', 'post/detail.tpl');
+
+        // 댓글 파셜들 정의
+        $this->template_->viewDefine('comments',      'comment/list.tpl');
+        $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
+
+        // CSS (Optimizer 사용)
+        $this->optimizer->setCss('post-detail.css');
+        $this->optimizer->setCss('comments.css');
+
+        $initial_items_count = is_array($comments) ? count($comments) : 0;
+
+
+        $this->template_->viewAssign([
+            'title'          => '게시글 상세',
+            'post'           => $row,
+            'is_owner'       => (bool)$is_owner,
+            'files'          => $files,
+
+            // 댓글 데이터
+            'post_id'        => $post_id,
+            'comments'       => $comments,
+            'comment_cnt'    => (int)$comment_cnt,
+
+            // JS 용 안전 값
+            'post_id_js'         => $post_id,                 // 정수 보장
+            'has_more_js'        => $comment_cnt > $initial_items_count, // 더 불러올 게 있는지
+            'initial_count_js'   => $initial_items_count,     // 초기 렌더 개수
         ]);
+
+        // // 뷰 로드
+        // $this->load->view('post/detail', [
+        //     'title' => $row['title'],
+        //     'post'  => $row,
+        //     'files' => $files,
+        //     'is_owner'  => $is_owner,
+        //     'comments' => $comments,
+        //     'comment_cnt' => $comment_cnt,
+        // ]);
     }
 
 

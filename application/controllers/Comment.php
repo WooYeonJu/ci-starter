@@ -24,10 +24,10 @@ class Comment extends MY_Controller
     //     $this->load->view('comment/list');
     // }
 
-    // 해당 게시글의 댓글 조회(상위 n개)
+
     public function list_json($post_id)
     {
-        $post_id   = (int)$post_id;
+        $post_id = (int)$post_id;
         if ($post_id <= 0) {
             return $this->output->set_status_header(400)
                 ->set_content_type('application/json', 'utf-8')
@@ -36,28 +36,79 @@ class Comment extends MY_Controller
                     'error'  => ['code' => 'BAD_REQUEST', 'message' => 'post_id가 유효하지 않습니다.']
                 ], JSON_UNESCAPED_UNICODE));
         }
-        // 이전 조회 마지막 댓글 path 이후부터 가져오겠다는 뜻
-        $afterPath = $this->params['afterPath'] ?? '';
-        // 한 번에 가져올 갯수 제한 200개
-        $limit     = (int)($this->params['limit'] ?? 10);
-        if ($limit < 1) $limit = 1;
-        if ($limit > 500) $limit = 500; // 안전 상한
 
-        // 모델에서 limit+1로 가져와 hasMore(데이터가 더 있는지)/nextCursor(다음에 불러올 첫번째 애 경로) 계산
+        // afterPath, limit 파라미터 (MY_Controller의 $this->params 사용 or GET 직접)
+        $afterPath = isset($this->params['afterPath'])
+            ? (string)$this->params['afterPath']
+            : (string)$this->input->get('afterPath', true);
+
+        $limit = isset($this->params['limit'])
+            ? (int)$this->params['limit']
+            : (int)$this->input->get('limit', true);
+
+        if ($limit < 1)   $limit = 10;
+        if ($limit > 500) $limit = 500;
+
+        // 커서 기반 페이지 조회 (limit+1 내부 처리로 hasMore/nextCursor 계산)
         $page = $this->comment->get_by_post_page_fetch_plus($post_id, $afterPath, $limit);
+        $items = isset($page['items']) ? $page['items'] : [];
 
-        // 아이템 조각만 렌더 (부분뷰: comment/_items.php)
-        $html = $this->load->view('comment/_items', ['comments' => $page['items']], TRUE);
+        // ✨ Template_로 li 조각 렌더 (절대 layout_common/layout_empty 정의 금지!)
+        $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
+        $this->template_->viewAssign(['comments' => $items]);
 
-        // json으로 반환값 변환
-        return $this->output->set_content_type('application/json', 'utf-8')
+        // 문자열로 가져오기 (출력 X)
+        $html = (string)$this->template_->viewFetch('comment_items');
+
+        $this->optimizer->setCss('comments.css');
+
+
+        // JSON 반환
+        return $this->output
+            ->set_content_type('application/json', 'utf-8')
             ->set_output(json_encode([
                 'status'     => 'success',
                 'html'       => $html,
-                'hasMore'    => $page['hasMore'],
-                'nextCursor' => $page['nextCursor'],
+                'hasMore'    => !empty($page['hasMore']),
+                'nextCursor' => isset($page['nextCursor']) ? (string)$page['nextCursor'] : '',
             ], JSON_UNESCAPED_UNICODE));
     }
+
+
+    // // 해당 게시글의 댓글 조회(상위 n개)
+    // public function list_json($post_id)
+    // {
+    //     $post_id   = (int)$post_id;
+    //     if ($post_id <= 0) {
+    //         return $this->output->set_status_header(400)
+    //             ->set_content_type('application/json', 'utf-8')
+    //             ->set_output(json_encode([
+    //                 'status' => 'error',
+    //                 'error'  => ['code' => 'BAD_REQUEST', 'message' => 'post_id가 유효하지 않습니다.']
+    //             ], JSON_UNESCAPED_UNICODE));
+    //     }
+    //     // 이전 조회 마지막 댓글 path 이후부터 가져오겠다는 뜻
+    //     $afterPath = $this->params['afterPath'] ?? '';
+    //     // 한 번에 가져올 갯수 제한 200개
+    //     $limit     = (int)($this->params['limit'] ?? 10);
+    //     if ($limit < 1) $limit = 1;
+    //     if ($limit > 500) $limit = 500; // 안전 상한
+
+    //     // 모델에서 limit+1로 가져와 hasMore(데이터가 더 있는지)/nextCursor(다음에 불러올 첫번째 애 경로) 계산
+    //     $page = $this->comment->get_by_post_page_fetch_plus($post_id, $afterPath, $limit);
+
+    //     // 아이템 조각만 렌더 (부분뷰: comment/_items.php)
+    //     $html = $this->load->view('comment/_items', ['comments' => $page['items']], TRUE);
+
+    //     // json으로 반환값 변환
+    //     return $this->output->set_content_type('application/json', 'utf-8')
+    //         ->set_output(json_encode([
+    //             'status'     => 'success',
+    //             'html'       => $html,
+    //             'hasMore'    => $page['hasMore'],
+    //             'nextCursor' => $page['nextCursor'],
+    //         ], JSON_UNESCAPED_UNICODE));
+    // }
 
     // /** 특정 댓글의 직계 자식 댓글만 조회해서 가져오는 함수 */
     // public function children()
