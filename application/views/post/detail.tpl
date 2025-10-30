@@ -17,9 +17,9 @@
   <!-- 작성자 전용 액션 -->
   {? is_owner }
     <div class="owner-actions">
-      <a href="{= site_url('post/edit/' ~ post.post_id) }">수정</a>
+      <a href="{= url_edit }">수정</a>
 
-      <form action="{= site_url('post/delete/' ~ post.post_id) }" method="post" style="display:inline">
+      <form action="{= url_delete }" method="post" style="display:inline">
         <button type="submit" onclick="return confirm('정말 삭제할까요?')">삭제</button>
       </form>
     </div>
@@ -31,7 +31,7 @@
     <ul>
       <!--{@ files}-->
         <li>
-          <a href="{= site_url('post/download/' ~ .file_id) }">
+          <a href="{= .url_download }">
             {= htmlspecialchars(.original_name, ENT_QUOTES, 'UTF-8') }
           </a>
         </li>

@@ -179,6 +179,15 @@ class Post extends MY_Controller
 
         // 이 게시물의 파일 조회
         $files = $this->posts->get_files($post_id);
+        $files = array_map(function ($f) {
+            return [
+                'file_id'       => (int)$f['file_id'],
+                'original_name' => (string)$f['original_name'],
+                'size_bytes'    => isset($f['size_bytes']) ? (int)$f['size_bytes'] : null,
+                // ✅ 템플릿에서 결합하지 않도록 미리 완성
+                'url_download'  => site_url('post/download/' . (int)$f['file_id']),
+            ];
+        }, $files ?? []);
 
         // 이 게시물 작성자가 본인인지 확인
         $me = $this->session->userdata('user');
@@ -219,6 +228,8 @@ class Post extends MY_Controller
             'post_id_js'         => $post_id,                 // 정수 보장
             'has_more_js'        => $comment_cnt > $initial_items_count, // 더 불러올 게 있는지
             'initial_count_js'   => $initial_items_count,     // 초기 렌더 개수
+            'url_edit'   => site_url('post/edit/' . $post_id),
+            'url_delete' => site_url('post/delete/' . $post_id),
         ]);
 
         // // 뷰 로드
