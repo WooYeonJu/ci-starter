@@ -12,6 +12,20 @@
 </head>
 <body>
 
+<!-- 오류 발생 시 alert로 사용자에게 출력 -->
+  {?
+    isset(alert_message) && alert_message
+  }
+  <script>
+    (function () {
+      var msg = {= json_encode(alert_message) };
+      if (msg) alert(msg);
+    })();
+  </script>
+  {/}
+
+
+
   <div id="wrap" style="display:flex; gap:0; min-height:100vh;">
 
     <!-- 본문 영역 -->

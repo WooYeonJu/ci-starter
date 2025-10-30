@@ -11,32 +11,45 @@ class Auth extends MY_Controller
         $this->load->model('User_model', 'users');
     }
 
-    // 로그인 화면으로 이동
-    public function login()
+    private function renderAuthTpl(string $bodyTpl, array $assign = [])
     {
-        // 이미 로그인 상태면 메인으로
-        if ($this->session->userdata('user')) {
-            return redirect('/post'); // 이미 로그인 된 상태라면 post 페이지로 이동
-        }
-        // $this->load->view('auth/login');
-
-        // 1) 빈 레이아웃을 쓰라고 '마커' 정의 (내용은 아무거나여도 됨)
+        // ① 항상 같은 레이아웃을 씁니다 (alert 스크립트가 있는 파일)
         $this->template_->viewDefine('layout_empty', 'common/layout_empty.tpl');
+        $this->template_->viewDefine('layout_common', $bodyTpl);
 
-        // 2) 실제 본문은 항상 layout_common 슬롯에 넣기
-        $this->template_->viewDefine('layout_common', 'auth/login.tpl');
-
+        // ② 공통 CSS
         $this->optimizer->setCss('auth.css');
 
-        // 플래시 가져오기
+        // ③ flash는 읽는 순간 소모 → 지금 읽어서 변수로 넘김
         $flash_success = $this->session->flashdata('success');
         $flash_error   = $this->session->flashdata('error');
 
-        // 페이지 메타/리소스/플래시 assign
-        $this->template_->viewAssign([
-            'title'         => '로그인',
-            'flash_success' => $this->session->flashdata('success'),
-            'flash_error'   => $this->session->flashdata('error'),
+        // ④ 기본 바인딩
+        $base = [
+            'flash_success' => $flash_success,
+            'flash_error'   => $flash_error,
+            'val_errors'    => validation_errors(),
+        ];
+
+        // ⑤ alert_message 우선순위: 컨트롤러에서 직접 지정 > error_message > flash_error > flash_success
+        if (!isset($assign['alert_message'])) {
+            $assign['alert_message'] =
+                ($assign['error_message'] ?? '') ?: ($flash_error ?: ($flash_success ?: ''));
+        }
+
+        // ⑥ 최종 assign
+        $this->template_->viewAssign(array_merge($base, $assign));
+    }
+
+
+    // 로그인 화면으로 이동
+    public function login()
+    {
+        if ($this->session->userdata('user')) return redirect('/post');
+
+        // 한 줄로 대체: 레이아웃/flash/alert 바인딩을 모두 renderAuthTpl에서 처리
+        return $this->renderAuthTpl('auth/login.tpl', [
+            'title' => '로그인',
         ]);
     }
 
@@ -58,11 +71,18 @@ class Auth extends MY_Controller
             ['required' => '비밀번호를 입력해주세요.']
         );
 
+        if (!$this->form_validation->run()) {
+            return $this->renderAuthTpl('auth/login.tpl', [
+                'title'         => '로그인',
+                'error_message' => '아이디 또는 비밀번호가 올바르지 않습니다.',
+                'old'           => ['login_id' => $this->input->post('login_id', true)],
+            ]);
+        }
 
         // 입력값 검증 실패(필수값 누락 등) 시 그대로 로그인 페이지 출력
-        if (!$this->form_validation->run()) {
-            return $this->load->view('auth/login');
-        }
+        // if (!$this->form_validation->run()) {
+        //     return $this->load->view('auth/login');
+        // }
 
         // 폼에서 입력받은 id, password 받아올 변수 선언
         $login_id = $this->input->post('login_id', TRUE);
@@ -73,10 +93,18 @@ class Auth extends MY_Controller
 
         // 유저 정보가 조회되지 않거나, password 값이 틀렸을 경우
         if (!$user || !password_verify($password, $user->password)) {
-            $this->session->set_flashdata('error', '아이디 또는 비밀번호가 올바르지 않습니다.');
-            $data['error'] = '아이디 또는 비밀번호가 올바르지 않습니다.';
-            return $this->load->view('auth/login', $data);
+            return $this->renderAuthTpl('auth/login.tpl', [
+                'title'         => '로그인',
+                'error_message' => '아이디 또는 비밀번호가 올바르지 않습니다.',
+                'old'           => ['login_id' => $login_id],
+            ]);
         }
+
+        // if (!$user || !password_verify($password, $user->password)) {
+        //     $this->session->set_flashdata('error', '아이디 또는 비밀번호가 올바르지 않습니다.');
+        //     $data['error'] = '아이디 또는 비밀번호가 올바르지 않습니다.';
+        //     return $this->load->view('auth/login', $data);
+        // }
 
         // 세션 저장
         // user_id(auto_increment)
@@ -105,24 +133,11 @@ class Auth extends MY_Controller
     // 회원가입 폼
     public function register()
     {
-        if ($this->session->userdata('user')) {
-            return redirect('post'); // 로그인 상태면 게시판으로
-        }
-        // $this->load->view('auth/register');
+        if ($this->session->userdata('user')) return redirect('post');
 
-        // 빈 레이아웃 사용 신호 + 본문 tpl 지정
-        $this->template_->viewDefine('layout_empty', 'common/_empty_marker.tpl');
-        $this->template_->viewDefine('layout_common', 'auth/register.tpl');
-
-        // 페이지 리소스(Optimizer 사용)
-        $this->optimizer->setCss('auth.css'); // /assets/css/auth.css 기준 (Optimizer 보정 반영)
-
-        // 플래시/검증 에러 전달
-        $this->template_->viewAssign([
-            'title'         => '회원가입',
-            'flash_success' => $this->session->flashdata('success'),
-            'flash_error'   => $this->session->flashdata('error'),
-            'val_errors'    => validation_errors(), // CI Form Validation의 HTML 문자열
+        // 이전의 _empty_marker.tpl 사용 제거 → layout_empty.tpl로 통일
+        return $this->renderAuthTpl('auth/register.tpl', [
+            'title' => '회원가입',
         ]);
     }
 
@@ -176,7 +191,12 @@ class Auth extends MY_Controller
 
         // 유효성 검사 실패시 회원가입 화면 재로드
         if (!$this->form_validation->run()) {
-            return $this->load->view('auth/register');
+            return $this->renderAuthTpl('auth/register.tpl', [
+                'title' => '회원가입',
+                // 필요 시 안내 메시지:
+                // 'error_message' => '입력값을 확인해주세요.',
+                // 'old' => ['name' => $this->input->post('name', true), 'login_id' => $this->input->post('login_id', true)],
+            ]);
         }
 
         $name      = $this->input->post('name', TRUE);
@@ -188,18 +208,34 @@ class Auth extends MY_Controller
 
         // 오류 발생시 처리
         if (!$result['ok']) {
-            // 중복 오류인 경우
-            // 사용자에게 alert(이미 사용 중인 아이디입니다.)
-            // 회원가입 페이지 리다이렉트
             if ($result['error'] === 'DUPLICATE') {
-                $this->session->set_flashdata('error', '이미 사용 중인 아이디입니다.');
-                log_message('error', '회원가입 실패(중복): login_id=' . $login_id);
-                return redirect('auth/register');
+                return $this->renderAuthTpl('auth/register.tpl', [
+                    'title'         => '회원가입',
+                    'error_message' => '이미 사용 중인 아이디입니다.',
+                    'old'           => ['name' => $name, 'login_id' => $login_id],
+                ]);
             }
-            // 그 외 오류인 경우
-            $this->session->set_flashdata('error', '회원가입 처리 중 오류가 발생했습니다.');
-            return redirect('auth/register');
+            return $this->renderAuthTpl('auth/register.tpl', [
+                'title'         => '회원가입',
+                'error_message' => '회원가입 처리 중 오류가 발생했습니다.',
+                'old'           => ['name' => $name, 'login_id' => $login_id],
+            ]);
         }
+
+
+        // if (!$result['ok']) {
+        //     // 중복 오류인 경우
+        //     // 사용자에게 alert(이미 사용 중인 아이디입니다.)
+        //     // 회원가입 페이지 리다이렉트
+        //     if ($result['error'] === 'DUPLICATE') {
+        //         $this->session->set_flashdata('error', '이미 사용 중인 아이디입니다.');
+        //         log_message('error', '회원가입 실패(중복): login_id=' . $login_id);
+        //         return redirect('auth/register');
+        //     }
+        //     // 그 외 오류인 경우
+        //     $this->session->set_flashdata('error', '회원가입 처리 중 오류가 발생했습니다.');
+        //     return redirect('auth/register');
+        // }
 
         // 회원가입 성공시 로그 기록
         log_message('info', '회원가입 성공: user_id=' . $result['user_id'] . ' login_id=' . $login_id);
