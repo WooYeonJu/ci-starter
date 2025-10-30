@@ -71,7 +71,7 @@ class Post extends MY_Controller
             'total_pages'  => max(1, (int)ceil($result['total'] / $per_page)),
             'categories'   => $categories,
             'category_id'  => $category_id,
-            `q`            => $q,
+            'q'            => $q,
             'qs'           => $qs, // 페이징 링크에서 사용
         ];
 

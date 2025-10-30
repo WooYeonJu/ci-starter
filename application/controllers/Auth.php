@@ -25,9 +25,20 @@ class Auth extends MY_Controller
     public function do_login()
     {
 
-        // 입력값 검증 - 공백 제거
-        $this->form_validation->set_rules('login_id', 'Login ID', 'trim|required');
-        $this->form_validation->set_rules('password', 'Password', 'trim|required');
+        // 입력값 검증 - 공백 제거 등
+        $this->form_validation->set_rules(
+            'login_id',
+            '아이디',
+            'trim|required|min_length[2]|max_length[50]|regex_match[/^[A-Za-z0-9._-]+$/]',
+            ['required' => '아이디를 입력해주세요.', 'regex_match' => '아이디는 영문/숫자/._-만 가능합니다.']
+        );
+        $this->form_validation->set_rules(
+            'password',
+            '비밀번호',
+            'trim|required',
+            ['required' => '비밀번호를 입력해주세요.']
+        );
+
 
         // 입력값 검증 실패(필수값 누락 등) 시 그대로 로그인 페이지 출력
         if (!$this->form_validation->run()) {
@@ -67,10 +78,9 @@ class Auth extends MY_Controller
     // 로그아웃
     public function logout()
     {
-
         // 세션 삭제
         $this->session->sess_destroy();
-        return redirect('auth/login');
+        return redirect('login');
     }
 
     // 회원가입 폼
@@ -103,10 +113,10 @@ class Auth extends MY_Controller
         $this->form_validation->set_rules(
             'login_id',
             '아이디',
-            'trim|required|min_length[4]|max_length[50]',
+            'trim|required|min_length[2]|max_length[50]',
             [
                 'required'   => '아이디를 입력해주세요.',
-                'min_length' => '아이디는 최소 4자 이상이어야 합니다.',
+                'min_length' => '아이디는 최소 2자 이상이어야 합니다.',
                 'max_length' => '아이디는 최대 50자 이하로 입력해주세요.'
             ]
         );

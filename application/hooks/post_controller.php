@@ -12,12 +12,10 @@ class post_controller
 
     public function init()
     {
-        $this->ci =& get_instance();
+        $this->ci = &get_instance();
 
         # 최종 화면 출력
         $this->_view();
-
-
     }
 
     private function _view()
@@ -44,9 +42,8 @@ class post_controller
             $this->ci->template_->viewAssign($this->ci->optimizer->makeOptimizerScriptTag());
 
             $this->ci->template_->viewPrint('layout');
-
         } else {
-            $this->ci->output->enable_profiler(false);
+            $this->ci->output->enable_profiler(true);
         }
     }
 
