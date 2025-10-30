@@ -208,13 +208,36 @@ class Post extends MY_Controller
         // 카테고리 목록 조회
         $categories = $this->posts->get_categories();
 
-        $data = [
-            'title'      => '게시글 작성',
-            'categories' => $categories,
-        ];
+
+        // 본문 템플릿 지정
+        $this->template_->viewDefine('layout_common', 'post/create.tpl');
+
+        // Optimizer로 페이지 CSS
+        $this->optimizer->setCss('post-form.css');
+
+        // 플래시 & 검증 에러
+        $flash_success = $this->session->flashdata('success');
+        $flash_error   = $this->session->flashdata('error');
+        $validation_errors_html = validation_errors(); // form_validation 로드 전제
+
+        // 바인딩
+        $this->template_->viewAssign([
+            'title'                   => '게시글 작성',
+            'categories'              => $categories,
+            'flash_success'           => $flash_success,
+            'flash_error'             => $flash_error,
+            'validation_errors_html'  => $validation_errors_html,
+        ]);
+
+
+        // $data = [
+        //     'title'      => '게시글 작성',
+        //     'categories' => $categories,
+        // ];
+
 
         // 뷰 로드
-        $this->load->view('post/create', $data);
+        // $this->load->view('post/create', $data);
     }
 
     // 게시글 작성 함수
@@ -554,12 +577,44 @@ class Post extends MY_Controller
         $categories = $this->posts->get_categories();
         $files = $this->posts->get_files($post_id);
 
-        $this->load->view('post/edit', [
-            'title'      => '게시글 수정',
-            'post'       => $post,
-            'categories' => $categories,
-            'files'      => $files,
+        // 레이아웃 & CSS
+        $this->template_->viewDefine('layout_common', 'post/edit.tpl');
+        $this->optimizer->setCss('post-form.css');
+
+        // 유효성 에러 HTML (form_validation 사용 전제)
+        $validation_errors_html = validation_errors();
+
+        // 셀렉트 기본 선택값: POST 우선, 없으면 기존 카테고리
+        $selected_category_id = set_value('category_id', $post['category_id']);
+
+        // 기존 파일 목록을 프런트에 전달할 JSON
+        $existing_files = array_map(function ($f) {
+            return [
+                'id'   => (int)$f['file_id'],
+                'name' => (string)$f['original_name'],
+                'size' => isset($f['size_bytes']) ? (int)$f['size_bytes'] : 0,
+            ];
+        }, $files ?? []);
+        $existing_files_json = json_encode($existing_files, JSON_UNESCAPED_UNICODE);
+
+        $action_do_edit = site_url('post/do_edit/' . (int)$post['post_id']);
+
+        $this->template_->viewAssign([
+            'title'                 => '게시글 수정',
+            'post'                  => $post,
+            'categories'            => $categories,
+            'selected_category_id'  => (int)$selected_category_id,
+            'validation_errors_html' => $validation_errors_html,
+            'existing_files_json'   => $existing_files_json,
+            'action_do_edit' => $action_do_edit,
         ]);
+
+        // $this->load->view('post/edit', [
+        //     'title'      => '게시글 수정',
+        //     'post'       => $post,
+        //     'categories' => $categories,
+        //     'files'      => $files,
+        // ]);
     }
 
     // 수정 처리
