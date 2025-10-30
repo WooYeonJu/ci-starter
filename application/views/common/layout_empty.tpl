@@ -3,17 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- 페이지 타이틀: 컨트롤러에서 'title' 지정 시 사용 -->
   <title>{? isset(title) && title}{= title }{:}사이트 제목{/}</title>
 
   {? isset(css_optimizer) && css_optimizer }{= css_optimizer }{/}
+
 </head>
 <body>
-
-  <!-- 전역 헤더 (정의된 경우에만 출력) -->
-  {? this->viewDefined('layout_header')} {# layout_header } {/}
 
   <div id="wrap" style="display:flex; gap:0; min-height:100vh;">
 
@@ -26,6 +23,8 @@
     </main>
   </div>
 
+  <!-- 페이지 개별 JS: 컨트롤러에서 page_js = ['.../post-list.js', ...] 형태로 assign -->
   {? isset(js_optimizer) && js_optimizer }{= js_optimizer }{/}
+
 </body>
 </html>

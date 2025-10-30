@@ -18,7 +18,26 @@ class Auth extends MY_Controller
         if ($this->session->userdata('user')) {
             return redirect('/post'); // 이미 로그인 된 상태라면 post 페이지로 이동
         }
-        $this->load->view('auth/login');
+        // $this->load->view('auth/login');
+
+        // 1) 빈 레이아웃을 쓰라고 '마커' 정의 (내용은 아무거나여도 됨)
+        $this->template_->viewDefine('layout_empty', 'common/layout_empty.tpl');
+
+        // 2) 실제 본문은 항상 layout_common 슬롯에 넣기
+        $this->template_->viewDefine('layout_common', 'auth/login.tpl');
+
+        $this->optimizer->setCss('auth.css');
+
+        // 플래시 가져오기
+        $flash_success = $this->session->flashdata('success');
+        $flash_error   = $this->session->flashdata('error');
+
+        // 페이지 메타/리소스/플래시 assign
+        $this->template_->viewAssign([
+            'title'         => '로그인',
+            'flash_success' => $this->session->flashdata('success'),
+            'flash_error'   => $this->session->flashdata('error'),
+        ]);
     }
 
     // 로그인 (POST)
@@ -86,12 +105,25 @@ class Auth extends MY_Controller
     // 회원가입 폼
     public function register()
     {
-
-
         if ($this->session->userdata('user')) {
             return redirect('post'); // 로그인 상태면 게시판으로
         }
-        $this->load->view('auth/register');
+        // $this->load->view('auth/register');
+
+        // 빈 레이아웃 사용 신호 + 본문 tpl 지정
+        $this->template_->viewDefine('layout_empty', 'common/_empty_marker.tpl');
+        $this->template_->viewDefine('layout_common', 'auth/register.tpl');
+
+        // 페이지 리소스(Optimizer 사용)
+        $this->optimizer->setCss('auth.css'); // /assets/css/auth.css 기준 (Optimizer 보정 반영)
+
+        // 플래시/검증 에러 전달
+        $this->template_->viewAssign([
+            'title'         => '회원가입',
+            'flash_success' => $this->session->flashdata('success'),
+            'flash_error'   => $this->session->flashdata('error'),
+            'val_errors'    => validation_errors(), // CI Form Validation의 HTML 문자열
+        ]);
     }
 
     // 회원가입 요청(POST)

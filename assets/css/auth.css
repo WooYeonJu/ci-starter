@@ -1,6 +1,6 @@
 /* auth.css (login, register 공용) */
 body {
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   background-color: #f4f6f8;
   margin: 0;
   padding: 0;
@@ -30,8 +30,8 @@ form {
 form div {
   display: flex;
   flex-direction: column;
-  gap: 4px;              /* 6px → 4px로 줄임 */
-  margin-bottom: 12px;   /* 18px → 12px로 줄임 */
+  gap: 4px; /* 6px → 4px로 줄임 */
+  margin-bottom: 12px; /* 18px → 12px로 줄임 */
 }
 
 label {
@@ -70,22 +70,23 @@ button[type="submit"] {
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-top: 8px;       /* 6px → 8px으로 약간 여유 */
+  margin-top: 8px; /* 6px → 8px으로 약간 여유 */
 }
-
 
 button[type="submit"]:hover {
   background-color: #0056b3;
 }
 
-p a, a {
+p a,
+a {
   display: inline-block;
   margin-top: 16px;
   color: #007bff;
   text-decoration: none;
   font-size: 0.9rem;
 }
-p a:hover, a:hover {
+p a:hover,
+a:hover {
   text-decoration: underline;
 }
 
@@ -104,5 +105,32 @@ p a:hover, a:hover {
 
 /* 작은 화면 대응 */
 @media (max-width: 400px) {
-  form, .auth-error { width: 92%; padding: 24px; }
+  form,
+  .auth-error {
+    width: 92%;
+    padding: 24px;
+  }
+}
+
+/* ===== layout_empty 래퍼와 궁합 맞춤 패치 ===== */
+#wrap {
+  /* 레이아웃 래퍼는 블록으로 중립화 */
+  display: block;
+  min-height: 100vh;
+}
+
+#content {
+  /* 실제 센터링은 여기서 담당 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; /* 세로 가운데 */
+  padding: 0 16px; /* 모바일 여백 살짝 */
+}
+
+/* body에서 하던 flex는 끄고, 기본 블록으로 돌림 (auth.css만 적용되므로 다른 페이지에 영향 없음) */
+body {
+  display: block;
+  min-height: 100vh;
 }

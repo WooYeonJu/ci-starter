@@ -18,10 +18,24 @@ class post_controller
         $this->_view();
     }
 
+    /**
+     * 모든 컨트롤러에서 viewPrint()를 안 써도 훅으로 감싸서 공통 레이아웃 자동 출력
+     */
     private function _view()
     {
+        # 기본 레이아웃 (header, footer 없음)
+        if ($this->ci->template_->defined('layout_empty')) {
+            $this->ci->output->enable_profiler(false);
+            $this->ci->template_->viewDefine('layout', 'common/layout_empty.tpl');
+            $this->ci->template_->viewAssign($this->ci->optimizer->makeOptimizerScriptTag());
+            // $this->ci->template_->viewAssign((array) $this->ci->optimizer->makeOptimizerScriptTag());
+
+
+            $this->ci->template_->viewPrint('layout');
+        }
+
         # 공통 레이아웃 (header, footer 있음)
-        if ($this->ci->template_->defined('layout_common')) {
+        else if ($this->ci->template_->defined('layout_common')) {
             /* layout 파일 정의 */
             $this->ci->template_->viewDefine('layout', 'common/layout_common.tpl');
 
@@ -34,16 +48,8 @@ class post_controller
 
             /* 출력 */
             $this->ci->template_->viewPrint('layout');
-
-            # 기본 레이아웃 (header, footer 없음)
-        } else if ($this->ci->template_->defined('layout_empty')) {
-            $this->ci->output->enable_profiler(false);
-            $this->ci->template_->viewDefine('layout', 'common/layout_empty.tpl');
-            $this->ci->template_->viewAssign($this->ci->optimizer->makeOptimizerScriptTag());
-
-            $this->ci->template_->viewPrint('layout');
         } else {
-            $this->ci->output->enable_profiler(true);
+            $this->ci->output->enable_profiler(false);
         }
     }
 
