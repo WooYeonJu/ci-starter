@@ -1,6 +1,8 @@
 /* post-detail.css — 게시글 상세 */
 
-body { background: #f4f6f8; }
+body {
+  background: #f4f6f8;
+}
 
 .container {
   max-width: 800px;
@@ -30,19 +32,37 @@ body { background: #f4f6f8; }
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 20px 22px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   color: #2c2c2c;
   line-height: 1.7;
   word-break: break-word;
 }
 
 /* 소유자 액션 (수정/삭제) — 클래스가 없을 때도 보정 */
-.owner-actions,
-.container .content + div,
-.container .meta + div {
+/* .owner-actions,
+.container .content + div {
   margin: 12px 0 0;
   display: flex;
   gap: 8px;
+} */
+
+/* 오직 소유자 액션 버튼 묶음에만 적용 */
+.owner-actions {
+  margin: 12px 0 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* 본문 바로 다음 블록(댓글 폼 등)은 절대 flex 강제 금지 */
+.container .content + div {
+  display: block;
+  margin-top: 12px;
+}
+
+/* 메타 다음 블록도 기본 블록 흐름 유지 */
+.container .meta + div {
+  display: block;
+  margin-top: 12px;
 }
 
 /* 버튼 스타일 */
@@ -56,7 +76,7 @@ body { background: #f4f6f8; }
   padding: 9px 14px;
   text-decoration: none;
   cursor: pointer;
-  transition: background .2s, border-color .2s, color .2s, transform .02s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.02s;
   border: 1px solid #e5e7eb;
   background: #fff;
   color: #374151;
@@ -82,25 +102,39 @@ body { background: #f4f6f8; }
 }
 
 /* 첨부파일 */
-.container h4 { margin: 18px 0 10px; color: #374151; }
-.container ul { list-style: none; padding: 0; margin: 0; }
+.container h4 {
+  margin: 18px 0 10px;
+  color: #374151;
+}
+.container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 .container ul li {
   border: 1px solid #eef2f7;
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 8px;
 }
-.container ul li:hover { background-color: #fff; }
+.container ul li:hover {
+  background-color: #fff;
+}
 
 .container ul li a {
   color: #111827;
   text-decoration: none;
 }
-.container ul li a:hover { color: #007bff; text-decoration: underline; }
+.container ul li a:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
 
 /* 댓글 블록(간단한 여백만) */
 .container h4 + .comment-list,
-.container h4 + div { margin-top: 10px; }
+.container h4 + div {
+  margin-top: 10px;
+}
 
 /* 목록으로 이동 */
 a.back {
@@ -110,10 +144,16 @@ a.back {
   text-decoration: none;
   font-size: 0.95rem;
 }
-a.back:hover { text-decoration: underline; }
+a.back:hover {
+  text-decoration: underline;
+}
 
 /* 반응형 */
 @media (max-width: 560px) {
-  .container { padding: 0 16px 20px; }
-  .container h2 { font-size: 1.4rem; }
+  .container {
+    padding: 0 16px 20px;
+  }
+  .container h2 {
+    font-size: 1.4rem;
+  }
 }
