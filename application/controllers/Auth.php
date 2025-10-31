@@ -1,4 +1,5 @@
 <!-- OPTION: user withdraw 컬럼 추가하는 로직으로 수정 -->
+<!-- TODO: 관리자 계정 별도 생성 -> 카테고리 추가 할 수 있게 -->
 
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');

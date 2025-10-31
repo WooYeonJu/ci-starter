@@ -1,3 +1,8 @@
+<!-- TODO: 에러 떴을 때 redirect 되는거 php 파일로 리다이렉트 되는거 수정 -->
+<!-- TODO: 게시글 작성 실패했을 때 자기가 썼던 내용 + 파일 목록 다 다시 띄워지게 -->
+<!-- CHECKLIST: 파일 업로드 시 파일명 unique인지, 해시 쓰는지 확인 후 수정 -->
+<!-- TODO: 게시글 수정할 때 기존에 올렸던 파일 다시 올렸을 때 업로드 안 되도록 수정 -->
+
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 

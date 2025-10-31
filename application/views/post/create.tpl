@@ -1,3 +1,5 @@
+<!-- TODO: 업로드 가능한 파일 확장자명 같이 띄워주기(jpg|jpeg|png|gif|pdf|txt|zip|doc|docx|ppt|pptx|xls|xlsx) -->
+
 <div class="wrap">
   <h3>{= htmlspecialchars(title, ENT_QUOTES, 'UTF-8') }</h3>
 

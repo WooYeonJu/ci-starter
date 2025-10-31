@@ -1,3 +1,7 @@
+<!-- TODO: 댓글 비동기 처리 -->
+<!-- TODO: 댓글 달리면 페이지 새로고침 하거나 추가적인 작업 하지 않아도 알림 같은거 띄울 수 있게 -->
+<!-- TODO: 수많은 댓글이 있는 페이지에서 최하단에 달렸을 때도 내려가게 + 페이지 전체 새로고침 안되게  -->
+
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
