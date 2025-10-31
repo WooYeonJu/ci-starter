@@ -11,7 +11,7 @@
   </form>
 </div>
 
-<h3>댓글 ({= comment_cnt })</h3>
+<h3>댓글 (<span id="comment-count" data-count="{= comment_cnt }">{= comment_cnt }</span>)</h3>
 
 <!-- 댓글 블록 (항상 렌더링) -->
 <!-- data-stream-url: sse 관련 스트림 url 전달 -->
