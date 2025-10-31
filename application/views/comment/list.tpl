@@ -1,4 +1,4 @@
-<!-- TODO: - 댓글 등록 시 스크롤 + 하이라이트 -->
+<!-- TODO: 댓글 등록 시 스크롤 + 하이라이트 -->
 
 <!-- 새 댓글 작성 -->
 <div id="comment-form" style="margin-top:16px;">
@@ -19,7 +19,9 @@
 <div
   id="comment-section"
   data-post-id="{= post_id_js }"
-  data-has-more="{= has_more_js ? 1 : 0 }"
+  data-has-more="{= has_more_js }"
+  data-initial-count="{= initial_count_js }"
+  data-total-count="{= comment_cnt }"
   data-list-url="{= site_url('comment/list_json') }"
 >
   <ul id="comment-list" class="comment-list" style="list-style:none; padding-left:0;">

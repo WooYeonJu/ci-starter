@@ -1,67 +1,96 @@
-// assets/js/comments.js
+// DEBUG: 댓글 무한 스크롤 안되는거 수정
+
+
 (function () {
-  // 페이지 뒤로가기에 의한 자동 스크롤 복원 방지
+  // 뒤로가기 자동 스크롤 방지
   if ("scrollRestoration" in history) {
     try { history.scrollRestoration = "manual"; } catch (_) {}
   }
 
-  const section   = document.getElementById("comment-section");
+  const section  = document.getElementById("comment-section");
   if (!section) return;
 
-  // ----- 서버에서 data-attribute로 받은 값들 -----
-  const postId    = Number(section.dataset.postId || 0);
-  let hasMore     = section.dataset.hasMore === "1" || section.dataset.hasMore === "true";
-  const listUrl   = String(section.dataset.listUrl || "").replace(/\/+$/,""); // .../comment/list_json
+  // ----- 서버 전달 값 -----
+  const postId  = Number(section.dataset.postId || 0);
+  const parseBool = (v) => (v === "1" || v === "true" || v === true);
+  let hasMore = parseBool(section.dataset.hasMore);
 
-  // ----- 상태 -----
-  const list      = document.getElementById("comment-list");
-  const sentinel  = document.getElementById("cmt-sentinel");
-  const newForm   = document.getElementById("new-comment");
-  const extBtn    = document.getElementById("btn-new-comment");
+  const listUrl = String(section.dataset.listUrl || "").replace(/\/+$/,"");
 
-  let afterPath   = list.querySelector(".comment-item:last-child")?.dataset.path || "";
-  let loading     = false;
-  let inflight    = null;
+  // ----- 엘리먼트 -----
+  const list     = document.getElementById("comment-list"); // li.comment-item을 담는 컨테이너
+  const sentinel = document.getElementById("cmt-sentinel"); // 추가 로드 트리거(무한 스크롤)
+  const newForm  = document.getElementById("new-comment");
+  const extBtn   = document.getElementById("btn-new-comment");
 
+  // 마지막 li(.comment-item)의 path 안전 획득
+  // 목록의 마지막 항목의 data-path를 afterPath로 기록해서 다음에 불러올 항목 찾기
+  const lastItem = () => {
+    const items = list ? list.querySelectorAll(".comment-item") : [];
+    return items.length ? items[items.length - 1] : null;
+  };
+  let afterPath = lastItem()?.dataset.path || "";
+
+  let loading  = false;
+  let inflight = null;
+
+  // 대댓글 들여쓰기 
   function applyDepthColors(scope = document) {
     scope.querySelectorAll(".comment-item").forEach((el) => {
       const d = Number(el.dataset.depth || 0);
       el.style.setProperty("--depth", d);
     });
   }
-  applyDepthColors(list);
+  applyDepthColors(list || document);
 
-  // ----- 무한 스크롤 로드 -----
+  // 스크롤 컨테이너(overflow auto/scroll)면 그걸 root로, 아니면 뷰포트
+  function isScrollable(el) {
+    if (!el) return false;
+    const s = getComputedStyle(el);
+    return /(auto|scroll)/.test(s.overflow + s.overflowY + s.overflowX);
+  }
+  const rootEl = isScrollable(section) ? section : null;
+
+  // =========================================
+  // 무한 스크롤 구현
+  // =========================================
   async function loadComments() {
     if (loading || !hasMore) return false;
     loading = true;
 
-    io.unobserve(sentinel);
-    if (inflight) inflight.abort();
+    if (sentinel && io) io.unobserve(sentinel); // 로딩 중 중복 트리거 방지
+    if (inflight) inflight.abort();             // 이전 요청 있으면 취소
     inflight = new AbortController();
 
     try {
       const qs  = new URLSearchParams({ afterPath, limit: 200 });
-      const res = await fetch(`${listUrl}/${postId}?${qs.toString()}`, {
+      const url = `${listUrl}/${postId}?${qs.toString()}`;
+      const res = await fetch(url, {
         credentials: "same-origin",
         signal: inflight.signal
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.status !== "success") throw new Error("load fail");
 
+      // li HTML 조걱을 덧붙임
       if (typeof data.html === "string" && data.html.trim()) {
         list.insertAdjacentHTML("beforeend", data.html);
         applyDepthColors(list);
       }
 
+      // 커서/더보기 갱신
       afterPath = data.nextCursor || afterPath;
       hasMore   = !!data.hasMore;
 
-      if (hasMore) io.observe(sentinel);
+      // 새로 붙은 마지막 항목 다시 확인
+      afterPath = lastItem()?.dataset.path || afterPath;
+
+      if (hasMore && sentinel && io) io.observe(sentinel);
       return true;
     } catch (e) {
-      if (e.name !== "AbortError") console.error(e);
-      if (hasMore) io.observe(sentinel);
+      if (e.name !== "AbortError") console.error("[comments] load error:", e);
+      if (hasMore && sentinel && io) io.observe(sentinel);
       return false;
     } finally {
       loading = false;
@@ -70,17 +99,29 @@
   }
 
   // ----- IO & 초기 보충 로드 -----
-  const io = new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) loadComments();
-  }, { root: null, rootMargin: "200px", threshold: 0 });
+  const io = (typeof IntersectionObserver !== "undefined")
+    ? new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) loadComments(); },
+        {
+          root: rootEl,               // 뷰포트 또는 스크롤 컨테이너
+          rootMargin: "600px 0px",    // 여유를 넉넉히
+          threshold: 0
+        }
+      )
+    : null;
 
-  if (hasMore && sentinel) io.observe(sentinel);
+  if (io && sentinel && hasMore) io.observe(sentinel);
 
+  // 1) 페이지 높이가 낮으면 즉시 보충 로드
   window.addEventListener("load", () => {
-    if (hasMore && document.documentElement.scrollHeight <= window.innerHeight + 1) {
+    const doc = document.documentElement;
+    if (hasMore && doc.scrollHeight <= window.innerHeight + 1) {
       loadComments();
     }
   });
+
+  // 2) 혹시 IO 트리거가 안 걸린 경우를 대비해 첫 틱에서 한 번 더 시도
+  queueMicrotask(() => { if (hasMore) loadComments(); });
 
   // ----- 답글 폼 show/hide -----
   document.addEventListener("click", (e) => {
@@ -135,7 +176,6 @@
         return;
       }
 
-      // 서버가 html 조각을 줄 수도 있고(미래 확장), id만 줄 수도 있음
       const hasHtml = typeof data.html === "string" && data.html.trim().length > 0;
 
       if (hasHtml) {
@@ -161,12 +201,17 @@
           list.appendChild(newEl);
         }
         if (form.tagName === "FORM") form.reset();
+
+        // 새 커서/색상 반영
         applyDepthColors(newEl.ownerDocument || document);
+        afterPath = lastItem()?.dataset.path || afterPath;
+        // 새 댓글 추가 후 즉시 다음 페이지 프리패치 유도
+        if (hasMore && io && sentinel) io.observe(sentinel);
         return;
       }
 
-      // html이 없으면 focus 파라미터로 리디렉트(서버 응답 키: comment_id)
-      const newId = data.comment_id || data.id; // 양쪽 키 허용
+      // html 미포함 → focus 리다이렉트
+      const newId = data.comment_id || data.id;
       if (newId) {
         const url = new URL(location.href);
         url.searchParams.set("focus", newId);
@@ -181,10 +226,7 @@
     }
   }
 
-  // 디버그
-  window.__debug = {
-    postId, hasMore, afterPath,
-    listExists: !!list
-  };
-  console.log("[COMMENTS ready]", window.__debug);
+  // // 디버그
+  // window.__debug = { postId, hasMore, afterPath, listExists: !!list, rootEl: !!rootEl };
+  // console.log("[COMMENTS ready]", window.__debug);
 })();

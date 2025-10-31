@@ -215,6 +215,11 @@ class Post extends MY_Controller
 
         $initial_items_count = is_array($comments) ? count($comments) : 0;
 
+        $has_more = $comment_cnt > $initial_items_count;
+        log_message('debug', '[POST/DETAIL] post_id=' . $post_id
+            . ' comment_cnt=' . $comment_cnt
+            . ' initial_items_count=' . $initial_items_count
+            . ' has_more_js=' . ($has_more ? '1' : '0'));
 
         $this->template_->viewAssign([
             'title'          => '게시글 상세',
@@ -229,7 +234,7 @@ class Post extends MY_Controller
 
             // JS 용 안전 값
             'post_id_js'         => $post_id,                 // 정수 보장
-            'has_more_js'        => $comment_cnt > $initial_items_count, // 더 불러올 게 있는지
+            'has_more_js'        => $has_more, // 더 불러올 게 있는지
             'initial_count_js'   => $initial_items_count,     // 초기 렌더 개수
             'url_edit'   => site_url('post/edit/' . $post_id),
             'url_delete' => site_url('post/delete/' . $post_id),
