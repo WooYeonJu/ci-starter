@@ -230,26 +230,68 @@
         // 새로 붙는 항목은 client 플래그(커서 계산/중복 삽입 방지)
         newEl.dataset.origin = "client";
 
-        if (form.classList.contains("reply-form")) {
-          const parentLi = form.closest(".comment-item");
-          let childrenUl =
-            parentLi.querySelector("ul.children") ||
-            parentLi.querySelector("ul.reply-children") ||
-            parentLi.querySelector("ul");
-          if (!childrenUl) {
-            childrenUl = document.createElement("ul");
-            childrenUl.className = "children";
-            childrenUl.style.listStyle = "none";
-            childrenUl.style.paddingLeft = "0";
-            parentLi.appendChild(childrenUl);
-          }
-          childrenUl.appendChild(newEl);
-        } else {
-          list.appendChild(newEl);
-        }
-        if (form.tagName === "FORM") form.reset();
+        // ✅ 항상 최상위 리스트의 '적절한 위치'에 삽입 (부모 내부 X)
+  insertByPathToTopList(newEl);
+
+  // 폼 리셋 + reply-form은 닫기
+  if (form.tagName === "FORM") form.reset();
+  if (form.classList.contains("reply-form")) form.style.display = "none";
+
+  // 단일 오픈(이미 추가하셨다면 유지)
+  document.querySelectorAll("form.reply-form").forEach(f => {
+    if (f !== form && f.style.display === "block") {
+      try { f.reset(); } catch (_){}
+      f.style.display = "none";
+    }
+  });
+
+
+  //       if (form.classList.contains("reply-form")) {
+  //         const parentLi = form.closest(".comment-item");
+  //         // let childrenUl =
+  //         //   parentLi.querySelector("ul.children") ||
+  //         //   parentLi.querySelector("ul.reply-children") ||
+  //         //   parentLi.querySelector("ul");
+
+  //         let childrenUl = parentLi.querySelector(':scope > ul.children');
+
+  //         if (!childrenUl) {
+  //           childrenUl = document.createElement("ul");
+  //           childrenUl.className = "children";
+  //           childrenUl.style.listStyle = "none";
+  //           childrenUl.style.paddingLeft = "0";
+  //           parentLi.appendChild(childrenUl);
+  //         }
+  //         childrenUl.appendChild(newEl);
+
+  //         // 제출 후 답글 폼 닫기
+  //           try { form.reset(); } catch (_){}
+  // form.style.display = "none";
+
+  //   // (선택) 혹시 열려있던 다른 reply 폼도 모두 닫기
+  // document.querySelectorAll("form.reply-form").forEach(f => {
+  //   if (f !== form && f.style.display === "block") {
+  //     try { f.reset(); } catch (_){}
+  //     f.style.display = "none";
+  //   }
+  // });
+
+  //       } else {
+  //         list.appendChild(newEl);
+
+  //           // (선택) 상단 새댓글 작성 시 열려있던 reply 폼들 정리
+  // document.querySelectorAll("form.reply-form").forEach(f => {
+  //   if (f.style.display === "block") {
+  //     try { f.reset(); } catch (_){}
+  //     f.style.display = "none";
+  //   }
+  // });
+
+  //       }
+  //       if (form.tagName === "FORM") form.reset();
 
         // 방금 추가한 id 기록 → SSE 중복 방지
+        
         const idFromEl = Number(newEl.dataset.id || (newEl.id || '').replace('comment-', '')) || 0;
         if (idFromEl) clientJustAdded.add(idFromEl);
 
@@ -279,6 +321,24 @@
       alert("네트워크 오류가 발생했습니다.");
     }
   }
+
+
+  // 공통 유틸: path 오름차순 위치에 맞춰 #comment-list에 삽입
+function insertByPathToTopList(newEl) {
+  const newPath = newEl?.dataset?.path || "";
+  const siblings = Array.from(list.querySelectorAll(':scope > .comment-item')); // 직계만
+  let placed = false;
+  for (const li of siblings) {
+    const p = li.dataset.path || "";
+    if (p > newPath) {           // path 오름차순
+      list.insertBefore(newEl, li);
+      placed = true;
+      break;
+    }
+  }
+  if (!placed) list.appendChild(newEl);
+}
+
 
   // =========================================================
   // 댓글 등록 성공 시 자동 스크롤 + 하이라이트
