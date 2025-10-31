@@ -243,6 +243,7 @@ class Post extends MY_Controller
             'initial_count_js'   => $initial_items_count,     // 초기 렌더 개수
             'url_edit'   => site_url('post/edit/' . $post_id),
             'url_delete' => site_url('post/delete/' . $post_id),
+            'stream_url' => site_url('comment/stream/' . $post_id),
         ]);
 
         // // 뷰 로드

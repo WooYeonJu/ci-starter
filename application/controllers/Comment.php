@@ -1,9 +1,10 @@
-<!-- TODO: 댓글 비동기 처리 -->
-<!-- TODO: 댓글 달리면 페이지 새로고침 하거나 추가적인 작업 하지 않아도 알림 같은거 띄울 수 있게 -->
-<!-- TODO: 수많은 댓글이 있는 페이지에서 최하단에 달렸을 때도 내려가게 + 페이지 전체 새로고침 안되게  -->
-
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
+
+// TODO: 댓글 비동기 처리
+// TODO: 댓글 달리면 페이지 새로고침 하거나 추가적인 작업 하지 않아도 알림 같은거 띄울 수 있게
+// TODO: 수많은 댓글이 있는 페이지에서 최하단에 달렸을 때도 내려가게 + 페이지 전체 새로고침 안되게 
+
 
 class Comment extends MY_Controller
 {
@@ -222,5 +223,76 @@ class Comment extends MY_Controller
                 ->set_content_type('application/json', 'utf-8')
                 ->set_output(json_encode(['status' => 'error', 'message' => '서버 오류'], JSON_UNESCAPED_UNICODE));
         }
+    }
+
+    // =========================================================
+    // SSE 관련 엔드포인트
+    // =========================================================
+    public function stream($post_id)
+    {
+        header_remove();
+        header('Content-Type: text/event-stream; charset=utf-8');
+        header('Cache-Control: no-cache, no-transform');
+        header('X-Accel-Buffering: no');
+        @set_time_limit(0);
+        ignore_user_abort(true);
+        while (ob_get_level() > 0) @ob_end_clean();
+
+        $me = $this->session->userdata('user');
+        if (!$me) {
+            echo "event: error\ndata:{\"message\":\"unauthorized\"}\n\n";
+            flush();
+            return;
+        }
+        session_write_close(); // ★ 세션 락 해제
+
+        $post_id = (int)$post_id;
+        if ($post_id <= 0) {
+            echo "event: error\ndata:{\"message\":\"bad post_id\"}\n\n";
+            flush();
+            return;
+        }
+
+        $last = 0;
+        if (!empty($_SERVER['HTTP_LAST_EVENT_ID'])) $last = (int)$_SERVER['HTTP_LAST_EVENT_ID'];
+        else if (isset($_GET['lastId'])) $last = (int)$_GET['lastId'];
+
+        $row = $this->db->select('MAX(comment_id) max_id')->where('post_id', $post_id)->where('is_deleted', 0)->get('comment')->row_array();
+        $cursor = max((int)($row['max_id'] ?? 0), $last);
+
+        $deadline = time() + 120;
+        while (!connection_aborted() && time() < $deadline) {
+            $rows = $this->db->select('c.comment_id,c.post_id,c.user_id,c.comment_detail,c.created_at,u.name AS author_name')
+                ->from('comment c')->join('users u', 'u.user_id=c.user_id')
+                ->where('c.post_id', $post_id)->where('c.is_deleted', 0)
+                ->where('c.comment_id >', $cursor)->order_by('c.comment_id', 'ASC')->get()->result_array();
+
+            if ($rows) {
+                foreach ($rows as $n) {
+                    $cursor = (int)$n['comment_id'];
+                    $data = [
+                        'comment_id' => (int)$n['comment_id'],
+                        'post_id' => (int)$n['post_id'],
+                        'user_id' => (int)$n['user_id'],
+                        'author_name' => (string)$n['author_name'],
+                        'snippet' => mb_substr(trim((string)$n['comment_detail']), 0, 60),
+                        'created_at' => (string)$n['created_at'],
+                    ];
+                    echo "id: {$cursor}\n";
+                    echo "event: comment\n";
+                    echo 'data: ' . json_encode($data, JSON_UNESCAPED_UNICODE) . "\n\n";
+                    @flush();
+                    @ob_flush();
+                }
+            } else {
+                echo ": ping\n\n";
+                @flush();
+                @ob_flush();
+                sleep(2);
+            }
+        }
+        echo "event: done\ndata: {}\n\n";
+        @flush();
+        @ob_flush();
     }
 }

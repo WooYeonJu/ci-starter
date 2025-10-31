@@ -79,3 +79,6 @@ $route['post/do_edit/(:num)']['post'] = 'post/do_edit/$1';
 
 // 게시물 삭제 라우터 설정
 $route['post/delete/(:num)']['post']  = 'post/delete/$1';
+
+// 댓글 알림 SSE 라우터 설정
+$route['comment/stream/(:num)'] = 'comment/stream/$1';

@@ -377,4 +377,106 @@
   // // 디버그
   // window.__debug = { postId, hasMore, afterPath, listExists: !!list, rootEl: !!rootEl };
   // console.log("[COMMENTS ready]", window.__debug);
+
+
+  // =========================================================
+  // 여기서부터 SSE 관련 코드
+  // =========================================================
+  
+  // 토스트 UI 구현
+  (function () {
+  if (window.__toast) return; // 중복 로드 방지
+  const style = document.createElement("style");
+  style.textContent = `
+  .toast-wrap{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+  .toast{
+    min-width: 240px; max-width: 88vw;
+    background:#111827; color:#fff; padding:10px 14px; border-radius:10px;
+    box-shadow:0 6px 24px rgba(0,0,0,.18); opacity:.95; font-size:.92rem;
+    cursor:pointer;
+  }
+  .toast .meta{opacity:.8;font-size:.85em;margin-top:4px}
+  `;
+  document.head.appendChild(style);
+
+  const wrap = document.createElement("div");
+  wrap.className = "toast-wrap";
+  document.body.appendChild(wrap);
+
+  window.__toast = function (msg, metaText, onClick) {
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.innerHTML = `<div>${msg}</div>${metaText ? `<div class="meta">${metaText}</div>`:''}`;
+    wrap.appendChild(el);
+    let timer = setTimeout(() => { el.remove(); }, 4500);
+    el.addEventListener("click", () => {
+      clearTimeout(timer);
+      el.remove();
+      if (typeof onClick === "function") onClick();
+    });
+  };
+  })();
+
+// ----- SSE 연결 -----
+(function () {
+  const section = document.getElementById("comment-section");
+  if (!section || typeof EventSource === "undefined") return;
+
+  const postId    = Number(section.dataset.postId || 0);
+  const streamUrl = String(section.dataset.streamUrl || "").replace(/\/+$/,"");
+
+  // 현재 DOM의 마지막 댓글 id -> 재연결 시 손실 방지용
+  const lastKnownId = (function () {
+    const last = document.querySelector("#comment-list .comment-item:last-child");
+    return last ? Number(last.dataset.id || 0) : 0;
+  })();
+
+  let es;
+  try {
+    const url = streamUrl + (streamUrl.includes('?') ? '&' : '?') + 'lastId=' + encodeURIComponent(lastKnownId);
+    es = new EventSource(url, { withCredentials: true });
+  } catch (_) { return; }
+
+  // 새 댓글 이벤트 수신
+  es.addEventListener("comment", async (e) => {
+    try {
+      const data = JSON.parse(e.data || "{}");
+      const meta = `${data.author_name || '익명'} • ${data.created_at || ''}`.trim();
+
+      // if (typeof myUserId !== "undefined" && data.user_id === myUserId) return;
+      // 아직 DOM에 없다고 가정하고 추가분 로드 준비
+      hasMore = true;           // 커서 열기
+      scheduleLoad();           // 디바운스로 loadComments() 실행
+
+      // 토스트 클릭 시 해당 댓글로 스크롤 + 하이라이트 시도
+      window.__toast(`새 댓글이 달렸어요: ${data.snippet || ''}`, meta, async () => {
+        let el = document.getElementById("comment-" + data.comment_id);
+        if (!el) { await loadComments(); el = document.getElementById("comment-" + data.comment_id); }
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          highlightOnce(el);
+        } else {
+          const last = document.querySelector("#comment-list .comment-item:last-child");
+          if (last) last.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+      });
+    } catch (err) {
+      console.warn("SSE parse error:", err);
+    }
+  });
+
+  es.addEventListener("error", () => {
+    // 브라우저가 자동 재연결함. 필요한 경우 상태표시만.
+  });
+
+  // 간단 디바운스 로더 (짧은 시간에 여러 이벤트가 와도 1회만 로드)
+  let loadTimer = null;
+  function scheduleLoad() {
+    if (loadTimer) return;
+    loadTimer = setTimeout(async () => {
+      loadTimer = null;
+      await loadComments(); // 기존 함수 재사용
+    }, 400);
+  }
+  })();
 })();
