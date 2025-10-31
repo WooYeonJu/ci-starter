@@ -1,3 +1,5 @@
+<!-- OPTION: user withdraw 컬럼 추가하는 로직으로 수정 -->
+
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 

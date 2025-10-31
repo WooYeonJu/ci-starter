@@ -295,4 +295,15 @@ class Comment_model extends MY_Model
 
         return $this->db->affected_rows();
     }
+
+    public function get_by_id($comment_id)
+    {
+        $comment_id = $comment_id;
+        $row = $this->db->select('path')
+            ->from($this->table)
+            ->where('comment_id', $comment_id)
+            ->get()->row_array();
+        if (!$row) return 0;
+        return $row;
+    }
 }

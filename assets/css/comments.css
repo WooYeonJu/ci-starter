@@ -214,3 +214,23 @@ h3 {
 .comment-date {
   white-space: nowrap;
 }
+
+/* 여기서부터는 댓글 등록 시 하이라이트 + 스크롤 관련 내용 */
+
+.comment-item.cmt-highlight {
+  animation: cmtFlash 2s ease;
+  background: #fff8cc;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px rgba(255, 200, 0, 0.25) inset;
+}
+@keyframes cmtFlash {
+  0% {
+    background: #fff3a0;
+  }
+  40% {
+    background: #fff8cc;
+  }
+  100% {
+    background: transparent;
+  }
+}
