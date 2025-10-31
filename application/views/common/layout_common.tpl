@@ -26,6 +26,9 @@
     </main>
   </div>
 
+  <button id="btn-back-to-top" aria-label="맨 위로" title="맨 위로" hidden> ↑ </button>
+
+
   {? isset(js_optimizer) && js_optimizer }{= js_optimizer }{/}
 </body>
 </html>

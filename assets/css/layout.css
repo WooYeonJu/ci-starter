@@ -103,3 +103,65 @@ body {
 .td-date {
   white-space: nowrap;
 }
+
+/* 맨 위로 버튼 기본 스타일 */
+#btn-back-to-top {
+  position: fixed;
+  right: 20px; /* 필요 시 16~28px 사이로 조정 */
+  bottom: 20px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 9999px;
+  background: #111827;
+  color: #fff;
+  font-size: 18px;
+  line-height: 40px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  z-index: 9999;
+
+  /* 처음엔 숨김 */
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* 보이기 상태 */
+#btn-back-to-top.is-visible {
+  opacity: 0.92;
+  transform: translateY(0);
+}
+
+/* 호버/포커스 */
+#btn-back-to-top:hover,
+#btn-back-to-top:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+/* 모바일에서 조금 더 여백 */
+@media (max-width: 480px) {
+  #btn-back-to-top {
+    right: 14px;
+    bottom: 14px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    line-height: 36px;
+  }
+}
+
+/* 사용자 ‘애니메이션 줄이기’ 설정을 존중 */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  #btn-back-to-top {
+    transition: none;
+  }
+}
+
+/* 전역 스무스 스크롤(원하면 켜기) */
+/* html { scroll-behavior: smooth; } */

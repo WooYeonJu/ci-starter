@@ -1,3 +1,5 @@
+<!-- TODO: 스크롤 발생 시 맨 위로 올라가기 버튼 추가 -->
+
 <div class="container">
   <!-- 제목 -->
   <h2>{= htmlspecialchars(post.title, ENT_QUOTES, 'UTF-8') }</h2>

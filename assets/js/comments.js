@@ -1,6 +1,3 @@
-// DEBUG: 댓글 무한 스크롤 안되는거 수정
-
-
 (function () {
   // 뒤로가기 자동 스크롤 방지
   if ("scrollRestoration" in history) {

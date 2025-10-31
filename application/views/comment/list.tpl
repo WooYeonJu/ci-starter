@@ -1,4 +1,5 @@
 <!-- TODO: 댓글 등록 시 스크롤 + 하이라이트 -->
+<!-- TODO: 스크롤 발생 시 맨 위로 올라가기 버튼 추가 -->
 
 <!-- 새 댓글 작성 -->
 <div id="comment-form" style="margin-top:16px;">

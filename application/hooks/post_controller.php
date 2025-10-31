@@ -51,13 +51,14 @@ class post_controller
             // 공통 레이아웃 CSS도 여기서 한 번만 주입 가능
             $this->ci->optimizer->setCss('layout.css');
 
+            $this->ci->optimizer->setJs('goup.js');
 
             /* css, js Assign */
             $this->ci->template_->viewAssign($this->ci->optimizer->makeOptimizerScriptTag());
 
             /* 출력 */
             $this->ci->template_->viewPrint('layout');
-            $this->ci->output->enable_profiler(true);
+            $this->ci->output->enable_profiler(false);
         } else {
             $this->ci->output->enable_profiler(false);
         }
