@@ -152,12 +152,25 @@
   document.addEventListener("click", (e) => {
     const replyBtn = e.target.closest(".btn-reply");
     if (replyBtn) {
-      const form = replyBtn.nextElementSibling;
-      if (form) {
-        const show = form.style.display !== "block";
-        form.style.display = show ? "block" : "none";
-        if (show) form.querySelector("textarea")?.focus();
+          let targetForm = replyBtn.nextElementSibling;
+    if (!(targetForm && targetForm.matches("form.reply-form"))) {
+      targetForm = replyBtn.parentElement?.querySelector("form.reply-form") || null;
+    }
+
+    // 현재 열려있는 다른 모든 답글 폼 닫기
+    document.querySelectorAll("form.reply-form").forEach((f) => {
+      if (f !== targetForm && f.style.display === "block") {
+        try { f.reset(); } catch (_) {}
+        f.style.display = "none";
       }
+    });
+    // 타깃 폼 토글
+    if (targetForm) {
+      const show = targetForm.style.display !== "block";
+      targetForm.style.display = show ? "block" : "none";
+      if (show) targetForm.querySelector("textarea")?.focus();
+    }
+    return; // 이 분기에서 끝
     }
     const cancelBtn = e.target.closest(".btn-cancel-reply");
     if (cancelBtn) {
