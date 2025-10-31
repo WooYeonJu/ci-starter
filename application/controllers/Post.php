@@ -210,6 +210,9 @@ class Post extends MY_Controller
         $this->optimizer->setCss('post-detail.css');
         $this->optimizer->setCss('comments.css');
 
+        // JS
+        $this->optimizer->setJs('comments.js');
+
         $initial_items_count = is_array($comments) ? count($comments) : 0;
 
 
