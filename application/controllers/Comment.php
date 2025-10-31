@@ -204,19 +204,12 @@ class Comment extends MY_Controller
                 ->set_output(json_encode([
                     'status'      => 'success',
                     'comment_id'  => $new_id,
+                    'message' => '댓글이 등록되었습니다.'
                 ], JSON_UNESCAPED_UNICODE));
 
             // =========================================================
             // 여기서까지
             // =========================================================
-
-
-
-
-            // 성공 시 AJAX 요청에 대한 응답으로 JSON 형식의 응답 반환
-            // return $this->output
-            //     ->set_content_type('application/json', 'utf-8')
-            //     ->set_output(json_encode(['status' => 'success', 'comment_id' => $new_id], JSON_UNESCAPED_UNICODE));
         } catch (Throwable $e) {
             // 오류 발생 시 로그 기록
             log_message('error', 'comment/create failed: ' . $e->getMessage());

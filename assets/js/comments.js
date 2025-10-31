@@ -309,6 +309,10 @@
         return;
       }
 
+      if (data.message) {
+        alert(data.message);
+      }
+
       const hasHtml = typeof data.html === "string" && data.html.trim().length > 0;
 
       if (hasHtml) {
