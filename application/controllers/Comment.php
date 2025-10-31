@@ -202,13 +202,14 @@ class Comment extends MY_Controller
 
             $row = $this->comment->get_by_id($new_id);
 
-            // $html = $this->load->view('comment/_items', ['comments' => [$row]], true);
+            $html = $this->template_->viewFetchDirect('comment/_items', ['comments' => [$row]]);
 
             return $this->output
                 ->set_content_type('application/json', 'utf-8')
                 ->set_output(json_encode([
                     'status'      => 'success',
                     'comment_id'  => $new_id,
+                    'html' => $html,
                     'message' => '댓글이 등록되었습니다.'
                 ], JSON_UNESCAPED_UNICODE));
 

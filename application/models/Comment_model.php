@@ -298,12 +298,18 @@ class Comment_model extends MY_Model
 
     public function get_by_id($comment_id)
     {
-        $comment_id = $comment_id;
-        $row = $this->db->select('path')
-            ->from($this->table)
-            ->where('comment_id', $comment_id)
-            ->get()->row_array();
-        if (!$row) return 0;
-        return $row;
+        $comment_id = (int)$comment_id;
+        $sql = "
+        SELECT 
+            c.comment_id, c.post_id, c.user_id, c.parent_id,
+            c.root_id, c.depth, c.path,
+            c.comment_detail, c.created_at,
+            u.name AS author_name
+        FROM {$this->table} AS c
+        JOIN users AS u ON u.user_id = c.user_id
+        WHERE c.comment_id = {$comment_id} AND c.is_deleted = 0
+        LIMIT 1
+    ";
+        return $this->excute($sql, 'row');
     }
 }

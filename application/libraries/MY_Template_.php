@@ -110,4 +110,100 @@ class MY_Template_ extends CI_Template_
             return $this->fetch($fid);
         }
     }
+
+    /**
+     * [신규] define() 없이 파일을 바로 렌더하여 문자열로 반환
+     * - $file: 'comment/_items' 또는 'comment/_items.tpl'처럼 경로/파일
+     * - $data: 템플릿에 바인딩할 배열
+     * - $autoExt: 확장자가 없으면 '.tpl'을 자동으로 붙일지 여부
+     *
+     * 사용 예:
+     *   $html = $this->template_->viewFetchDirect('comment/_items', ['comments' => [$row]]);
+     */
+    public function viewFetchDirect(string $file, array $data = [], bool $autoExt = true): string
+    {
+
+        $dataPreview = print_r($data, true); // 배열을 문자열로 보기 좋게 변환
+        log_message('debug', "[Template_] viewFetchDirect called: file={$file}, data=" . $dataPreview);
+
+        // 확장자 자동 보정 (없을 때만)
+        if ($autoExt && !preg_match('/\.\w+$/', $file)) {
+            $file .= '.tpl';
+        }
+
+        // 임시 아이디 (define용)
+        $tmpId = '__tmp_' . uniqid('tpl_', true);
+
+        // 현재 바인딩된 변수 스냅샷
+        $prevVar = $this->var_;
+
+        try {
+            // 데이터 바인딩
+            if (!empty($data)) {
+                $this->assign($data);
+            }
+            // 공통 상수/기본값 보장
+            $this->defaultAssign();
+
+            // 파일을 임시 ID로 정의 후 fetch
+            $this->define([$tmpId => $file]);
+            $html = $this->fetch($tmpId);
+
+            // 문자열 보장
+            return (string) $html;
+        } catch (Throwable $e) {
+            // 필요 시 로깅
+            if (function_exists('log_message')) {
+                log_message('error', 'viewFetchDirect error: ' . $e->getMessage());
+            }
+            // 예외를 다시 던져도 되고, 빈 문자열 반환도 가능. 여기선 빈 문자열 반환.
+            return '';
+        } finally {
+            // 이전 바인딩 복구 (임시 assign에 의한 오염 방지)
+            $this->var_ = $prevVar;
+            // define 해제는 CI_Template_ 내부 상태에 접근해야 하므로 생략
+            // (임시 define이 남아 있어도 ID 충돌 방지를 위해 uniqid 사용)
+        }
+    }
+
+    /**
+     * [신규] define() 없이 파일을 바로 렌더해서 바로 출력 (echo)
+     *  - 문자열이 필요 없고 즉시 출력하고 싶을 때 사용
+     */
+    public function viewPrintDirect(string $file, array $data = [], bool $autoExt = true): void
+    {
+        $html = $this->viewFetchDirect($file, $data, $autoExt);
+        if ($html !== '') {
+            echo $html;
+        }
+    }
+
+    /**
+     * [신규] JSON 응답용 헬퍼: 특정 템플릿을 즉시 렌더해 'html' 필드로 담아 반환
+     *  컨트롤러에서 한 줄로 편하게 쓰도록 제공 (선택사항)
+     *
+     * 사용 예:
+     *   return $this->template_->jsonWithHtml('comment/_items', ['comments' => [$row]], [
+     *     'status' => 'success',
+     *     'comment_id' => $new_id,
+     *     'message' => '댓글이 등록되었습니다.'
+     *   ]);
+     */
+    public function jsonWithHtml(string $file, array $data = [], array $payload = [], bool $autoExt = true)
+    {
+        $html = $this->viewFetchDirect($file, $data, $autoExt);
+
+        $resp = array_merge($payload, ['html' => $html]);
+
+        // CI 출력기 사용 (컨트롤러 컨텍스트 가정)
+        if (function_exists('get_instance')) {
+            $ci = &get_instance();
+            return $ci->output
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode($resp, JSON_UNESCAPED_UNICODE));
+        }
+
+        // 혹시 get_instance를 못 쓸 환경이면 그냥 JSON 문자열 반환
+        return json_encode($resp, JSON_UNESCAPED_UNICODE);
+    }
 }
