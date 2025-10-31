@@ -194,7 +194,7 @@ class Post extends MY_Controller
         $is_owner = $me && ((int)$me['user_id'] === (int)$row['user_id']);
 
         // 이 게시물의 댓글 조회
-        // 초기 렌더에서는 기본 10개만 -> 무한 스크롤로 구현
+        // 초기 렌더에서는 최대 200개만 -> 무한 스크롤로 구현
         $comments = $this->comment->get_by_post_page($post_id, '', 200);
         // 전체 댓글 개수
         $comment_cnt = (int)$this->comment->count_by_post($post_id);

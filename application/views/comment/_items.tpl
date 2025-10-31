@@ -1,5 +1,6 @@
 <!--{@ comments}-->
-  <li class="comment-item"
+  <li id="comment-{= .comment_id }"
+      class="comment-item"
       data-id="{= .comment_id }"
       data-root="{= .root_id }"
       data-depth="{= .depth }"

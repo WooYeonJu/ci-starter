@@ -20,7 +20,6 @@ class Comment_model extends MY_Model
         $sql = "
         SELECT COUNT(*) AS cnt
         FROM {$this->table} c
-        JOIN users u ON u.user_id = c.user_id
         WHERE c.post_id = {$post_id}
           AND c.is_deleted = 0
     ";

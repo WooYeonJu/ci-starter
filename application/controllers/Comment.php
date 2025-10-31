@@ -53,7 +53,7 @@ class Comment extends MY_Controller
         $page = $this->comment->get_by_post_page_fetch_plus($post_id, $afterPath, $limit);
         $items = isset($page['items']) ? $page['items'] : [];
 
-        // ✨ Template_로 li 조각 렌더 (절대 layout_common/layout_empty 정의 금지!)
+        // Template_로 li 조각 렌더 (절대 layout_common/layout_empty 정의 금지!)
         $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
         $this->template_->viewAssign(['comments' => $items]);
 
@@ -61,7 +61,6 @@ class Comment extends MY_Controller
         $html = (string)$this->template_->viewFetch('comment_items');
 
         $this->optimizer->setCss('comments.css');
-
 
         // JSON 반환
         return $this->output

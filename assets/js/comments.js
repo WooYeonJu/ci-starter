@@ -1,32 +1,3 @@
-<!-- 새 댓글 작성 -->
-<div id="comment-form" style="margin-top:16px;">
-  <div class="cmt-head">
-    <h3>댓글 작성</h3>
-    <button type="button" id="btn-new-comment" form="new-comment" class="btn-primary">등록</button>
-  </div>
-
-  <form id="new-comment" method="post" action="{= site_url('comment/create') }">
-    <input type="hidden" name="post_id" value="{= post_id }">
-    <textarea name="comment_detail" rows="3" placeholder="댓글을 입력하세요" style="width:100%;"></textarea>
-  </form>
-</div>
-
-<h3>댓글 ({= comment_cnt })</h3>
-
-<!-- 댓글 목록 -->
-{? isset(comments) && comments }
-  <div id="comment-section">
-    <ul id="comment-list" class="comment-list" style="list-style:none; padding-left:0;">
-      {# comment_items }  <!-- partial include -->
-    </ul>
-    <!-- 스크롤 끝 확인용 -->
-    <div id="cmt-sentinel" style="height:1px;"></div>
-  </div>
-{:}
-  <p>아직 댓글이 없습니다.</p>
-{/}
-
-<script>
 if ('scrollRestoration' in history) {
   try { history.scrollRestoration = 'manual'; } catch (_) {}
 }
@@ -34,9 +5,9 @@ if ('scrollRestoration' in history) {
 (function () {
 
   /* ===== 상태 ===== */
-  const postId   = Number({= json_encode(post_id_js) });
+const postId = Number(root?.dataset.postId || 0);
   let afterPath  = document.querySelector('#comment-list .comment-item:last-child')?.dataset.path || '';
-  let hasMore    = {= json_encode(has_more_js) };
+let hasMore  = root?.dataset.hasMore === '1';
   let loading    = false;
   let inflight   = null;
 
@@ -199,4 +170,3 @@ if ('scrollRestoration' in history) {
   window.__debug = { hasMore, afterPath, postId, listExists: !!document.getElementById('comment-list') };
   console.log('[DEBUG ready]', window.__debug);
 })();
-</script>
