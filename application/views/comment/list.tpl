@@ -25,6 +25,7 @@
   data-stream-url="{= stream_url }"
   data-item-url="{= site_url('comment/item') }"
   data-around-url="{= site_url('comment/around_json') }"
+data-user-id="{= user_id }"
 >
   <ul id="comment-list" class="comment-list" style="list-style:none; padding-left:0;">
     {? isset(comments) && comments } {# comment_items } {/}

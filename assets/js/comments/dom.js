@@ -1,13 +1,23 @@
+// 파일 시스템 전체에서 DOM(문서 객체 모델)을 다루는 공통 유틸리티 모델
+// 즉, 댓글 리스트 조작 및 제어하는 파일
+//  위치계산
+//  정렬 삽입    - 새 댓글 추가되었을 때 data-path 기준으로 어느 위치에 삽입될지 판단
+//  자동 스크롤 및 하이라이트
+
 (function (root) {
   const { state, applyDepthColors } = root.CMT || {};
   if (!state) return;
 
+  // 현재 화면 경계의 path 계산
+  // 댓글 리스트(state.list)의 첫 번째 직계 자식(첫 댓글)을 구해 data-path 반환
+  // :scope > 써서 중첩 자식이 잡히지 않게 방지
   function firstShownPath() {
     const first =
       state.list &&
       state.list.querySelector(":scope > .comment-item:first-child");
     return first ? first.dataset.path || "" : "";
   }
+  // 마지막 직계 자식(마지막 댓글)의 data-path 반환
   function lastShownPath() {
     const last =
       state.list &&
@@ -18,20 +28,28 @@
     return lastShownPath();
   }
 
+  // 현재 창의 삽입 가능 여부 판정
   function shouldInsertIntoCurrentWindow(newPath) {
     if (!newPath) return true;
+
+    // 윈도우 모드의 경우 서버가 준 winPrevCursor ~ winNextCursor 경계 안에서만 삽입
     if (state.mode === "window") {
       const lo = state.winPrevCursor || firstShownPath();
       const hi = state.winNextCursor || lastShownPath();
       if (!lo || !hi) return true;
       return lo <= newPath && newPath <= hi;
     }
+
+    // 일반(normal) 모드의 경우 현재 보이는 첫~마지막 path 경계 내애서 삽입 허용
     const head = firstShownPath();
     const tail = lastShownPath();
     if (!head || !tail) return true;
     return head <= newPath && newPath <= tail;
   }
 
+  // path 기준 정렬 삽입
+  // 이미 있는 댓글들의 data-path와 오름차순 비교하여 삽입
+  // 선형 탐색
   function insertByPathToTopList(newEl) {
     const newPath = newEl?.dataset?.path || "";
     const siblings = Array.from(
@@ -49,6 +67,7 @@
     if (!placed) state.list.appendChild(newEl);
   }
 
+  // 스크롤 + 하이라이트
   function scrollToWithOffset(el, offset = 100) {
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -61,6 +80,7 @@
     setTimeout(() => el.classList.remove("cmt-highlight"), ms);
   }
 
+  //
   function htmlToFrag(html) {
     const t = document.createElement("template");
     t.innerHTML = (html || "").trim();

@@ -85,3 +85,6 @@ $route['comment/stream/(:num)'] = 'comment/stream/$1';
 
 // 중간 대댓 삽입 시 단일 댓글 조회용 라우터 설정
 $route['comment/item/(:num)'] = 'comment/item/$1';
+
+// 댓글 삭제 라우터 설정
+$route['comment/delete/(:num)'] = 'comment/delete/$1';

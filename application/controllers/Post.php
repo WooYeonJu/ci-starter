@@ -223,6 +223,7 @@ class Post extends MY_Controller
         $this->optimizer->setJs('comments/windowMode.js');
         $this->optimizer->setJs('comments/api.js');
         $this->optimizer->setJs('comments/submit.js');
+        $this->optimizer->setJs('comments/delete.js');
         $this->optimizer->setJs('comments/sse.js');
         $this->optimizer->setJs('comments/index.js'); // 마지막: IO 초기화/부트스트랩
         // $this->optimizer->setJs('comments.js');
@@ -240,6 +241,9 @@ class Post extends MY_Controller
             'post'           => $row,
             'is_owner'       => (bool)$is_owner,
             'files'          => $files,
+
+            // 현재 로그인한 유저 아이디
+            'user_id'        => $me['user_id'],
 
             // 댓글 데이터
             'post_id'        => $post_id,

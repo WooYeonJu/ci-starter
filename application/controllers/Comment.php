@@ -1,10 +1,6 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-// TODO: 댓글 비동기 처리
-// TODO: 댓글 달리면 페이지 새로고침 하거나 추가적인 작업 하지 않아도 알림 같은거 띄울 수 있게
-// TODO: 수많은 댓글이 있는 페이지에서 최하단에 달렸을 때도 내려가게 + 페이지 전체 새로고침 안되게 
-// TODO: 댓글 삭제(사용자 이름은 남겨두고 내용만 (삭제된 댓글입니다)로 출력?)
 // OPTION: 댓글 수정?
 
 /** 
@@ -86,7 +82,14 @@ class Comment extends MY_Controller
 
         // li 템플릿 렌더
         $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
-        $this->template_->viewAssign(['comments' => $items]);
+        // $this->template_->viewAssign(['comments' => $items]);
+
+        $me = $this->session->userdata('user');
+        $this->template_->viewAssign([
+            'comments' => $items,
+            'user_id'  => (int)($me['user_id'] ?? 0),
+        ]);
+
         $html = (string)$this->template_->viewFetch('comment_items');
 
         return $this->output->set_content_type('application/json', 'utf-8')
@@ -134,7 +137,12 @@ class Comment extends MY_Controller
 
         // Template_로 li 조각 렌더 (절대 layout_common/layout_empty 정의 금지!)
         $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
-        $this->template_->viewAssign(['comments' => $items]);
+        // $this->template_->viewAssign(['comments' => $items]);
+        $me = $this->session->userdata('user');
+        $this->template_->viewAssign([
+            'comments' => $items,
+            'user_id'  => (int)($me['user_id'] ?? 0),
+        ]);
 
         // 문자열로 가져오기 (출력 X)
         $html = (string)$this->template_->viewFetch('comment_items');
@@ -265,6 +273,32 @@ class Comment extends MY_Controller
                 ->set_output(json_encode(['status' => 'error', 'message' => '댓글을 입력해주세요'], JSON_UNESCAPED_UNICODE));
         }
 
+        // 대댓인 경우 부모 댓글이 삭제된 경우
+        $parent_id = (int)$this->input->post('parent_id');
+        if ($parent_id > 0) {
+            $parent = $this->comment->get_by_id($parent_id); // or find()
+            if (!$parent) {
+                return $this->output->set_status_header(410)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'status' => 'error',
+                        'message' => '부모 댓글이 존재하지 않습니다.'
+                    ], JSON_UNESCAPED_UNICODE));
+            }
+            if (
+                (int)$parent['is_deleted'] === 1 ||
+                $parent['comment_detail'] === '삭제된 댓글입니다'
+            ) {
+                return $this->output->set_status_header(410)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'status' => 'error',
+                        'message' => '이미 삭제된 댓글에 답글을 달 수 없습니다.'
+                    ], JSON_UNESCAPED_UNICODE));
+            }
+        }
+
+
         // 댓글 저장 시도
         try {
             $new_id = $this->comment->create($post_id, $user_id, $detail, $parent_id);
@@ -281,7 +315,11 @@ class Comment extends MY_Controller
             }
 
             $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
-            $this->template_->viewAssign(['comments' => [$row]]);
+            // $this->template_->viewAssign(['comments' => [$row]]);
+            $this->template_->viewAssign([
+                'comments' => [$row],
+                'user_id'  => (int)$user_id, // 현재 로그인 사용자
+            ]);
             $html = (string)$this->template_->viewFetch('comment_items');
 
             return $this->output
@@ -289,6 +327,7 @@ class Comment extends MY_Controller
                 ->set_output(json_encode([
                     'status'      => 'success',
                     'comment_id'  => $new_id,
+                    'user_id'      => (int)$user_id,
                     'html' => $html,
                     'message' => '댓글이 등록되었습니다.'
                 ], JSON_UNESCAPED_UNICODE));
@@ -320,6 +359,7 @@ class Comment extends MY_Controller
                 ], JSON_UNESCAPED_UNICODE));
         }
 
+        $me = $this->session->userdata('user');
         $row = $this->comment->get_by_id($comment_id);
         if (!$row || !empty($row['is_deleted'])) {
             return $this->output->set_status_header(404)
@@ -332,7 +372,12 @@ class Comment extends MY_Controller
 
         // 템플릿으로 li 1개 렌더
         $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
-        $this->template_->viewAssign(['comments' => [$row]]);
+        // $this->template_->viewAssign(['comments' => [$row]]);
+
+        $this->template_->viewAssign([
+            'comments' => [$row],
+            'user_id'  => (int)($me['user_id'] ?? 0),
+        ]);
         $html = (string)$this->template_->viewFetch('comment_items');
 
         return $this->output
@@ -340,6 +385,7 @@ class Comment extends MY_Controller
             ->set_output(json_encode([
                 'status' => 'success',
                 'html'   => $html,
+                'user_id' => (int)($me['user_id'] ?? 0),
                 'path'   => (string)$row['path'],   // 클라이언트 정렬용
             ], JSON_UNESCAPED_UNICODE));
     }
@@ -415,5 +461,95 @@ class Comment extends MY_Controller
         echo "event: done\ndata: {}\n\n";
         @flush();
         @ob_flush();
+    }
+
+    // =========================================================
+    // 댓글 삭제 로직
+    // =========================================================
+    // TODO: 댓글 등록 후 삭제 버튼 안 뜨는 오류 수정
+    // TODO: 댓글 버튼 css 안 먹는거 수정
+    public function delete($comment_id)
+    {
+        @ini_set('display_errors', 0);
+        @error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
+        $comment_id = (int)$comment_id;
+
+        $row = $this->comment->get_by_id($comment_id);
+        if ((int)$row['is_deleted'] === 1) {
+            return $this->output->set_status_header(410)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => '이미 삭제된 댓글입니다.']));
+        }
+
+
+        if ($comment_id <= 0) {
+            return $this->output->set_status_header(400)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'bad comment_id'], JSON_UNESCAPED_UNICODE));
+        }
+
+        $me = $this->session->userdata('user');
+        $my_id = is_array($me) ? (int)($me['user_id'] ?? 0) : (int)$me;
+        if (!$my_id) {
+            return $this->output->set_status_header(401)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => '로그인이 필요합니다'], JSON_UNESCAPED_UNICODE));
+        }
+
+        // 내가 쓴 댓글인지 확인
+        $row = $this->db->select('comment_id, user_id, comment_detail')
+            ->from('comment')->where('comment_id', $comment_id)->get()->row_array();
+        if (!$row) {
+            return $this->output->set_status_header(404)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'not found'], JSON_UNESCAPED_UNICODE));
+        }
+        if ((int)$row['user_id'] !== $my_id) {
+            return $this->output->set_status_header(403)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => '권한이 없습니다'], JSON_UNESCAPED_UNICODE));
+        }
+        // 이미 삭제문구면 OK 처리
+        if ($row['comment_detail'] === '삭제된 댓글입니다') {
+            return $this->output->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'success', 'comment_id' => $comment_id], JSON_UNESCAPED_UNICODE));
+        }
+
+        // 내용만 치환 (is_deleted는 그대로 둠: 목록에 남겨두기 위함)
+        $ok = $this->comment->soft_delete($comment_id);
+        if (!$ok) {
+            return $this->output->set_status_header(500)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => '삭제 실패'], JSON_UNESCAPED_UNICODE));
+        }
+
+        return $this->output->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode(['status' => 'success', 'comment_id' => $comment_id], JSON_UNESCAPED_UNICODE));
+    }
+
+    // 댓글 상태 확인: 존재/삭제 여부만 반환 (비로그인 허용 가능)
+    public function status($comment_id)
+    {
+        $comment_id = (int)$comment_id;
+        if ($comment_id <= 0) {
+            return $this->output->set_status_header(400)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['exists' => false, 'is_deleted' => true, 'message' => 'bad id'], JSON_UNESCAPED_UNICODE));
+        }
+
+        $row = $this->comment->get_by_id($comment_id);
+        if (!$row) {
+            return $this->output->set_status_header(404)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['exists' => false, 'is_deleted' => true], JSON_UNESCAPED_UNICODE));
+        }
+
+        return $this->output->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode([
+                'exists'     => true,
+                'is_deleted' => ((int)$row['is_deleted'] === 1)
+                    || ($row['comment_detail'] === '삭제된 댓글입니다')
+            ], JSON_UNESCAPED_UNICODE));
     }
 }

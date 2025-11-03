@@ -21,7 +21,6 @@ class Comment_model extends MY_Model
         SELECT COUNT(*) AS cnt
         FROM {$this->table} c
         WHERE c.post_id = {$post_id}
-          AND c.is_deleted = 0
     ";
 
         $row = $this->excute($sql, 'row');
@@ -38,11 +37,11 @@ class Comment_model extends MY_Model
         $cond = $afterPath !== '' ? "AND c.path > " . $this->db->escape($afterPath) : "";
         $sql = "
             SELECT c.comment_id, c.post_id, c.user_id, c.parent_id,
-                   c.root_id, c.depth, c.path, c.comment_detail, c.created_at,
+                   c.root_id, c.depth, c.path, c.comment_detail, c.created_at, c.is_deleted,
                    u.name AS author_name
             FROM {$this->table} c
             JOIN users u ON u.user_id = c.user_id
-            WHERE c.post_id = {$post_id} AND c.is_deleted = 0
+            WHERE c.post_id = {$post_id}
             {$cond}
             ORDER BY c.path
             LIMIT {$limit}
@@ -58,11 +57,11 @@ class Comment_model extends MY_Model
         $cond = $afterPath !== '' ? "AND c.path > " . $this->db->escape($afterPath) : "";
         $sql = "
             SELECT c.comment_id, c.post_id, c.user_id, c.parent_id,
-                c.root_id, c.depth, c.path, c.comment_detail, c.created_at,
+                c.root_id, c.depth, c.path, c.comment_detail, c.created_at, c.is_deleted,
                 u.name AS author_name
             FROM {$this->table} c
             JOIN users u ON u.user_id = c.user_id
-            WHERE c.post_id = {$post_id} AND c.is_deleted = 0
+            WHERE c.post_id = {$post_id}
             {$cond}
             ORDER BY c.path
             LIMIT {$fetch}
@@ -92,7 +91,7 @@ class Comment_model extends MY_Model
         $sql = "
             SELECT c.*
             FROM {$this->table} c
-            WHERE c.root_id = {$root_id} AND c.is_deleted = 0
+            WHERE c.root_id = {$root_id}
             {$cond}
             ORDER BY c.path
             LIMIT {$limit}
@@ -116,7 +115,7 @@ class Comment_model extends MY_Model
         $sql = "
             SELECT c.*
             FROM {$this->table} c
-            WHERE c.parent_id = {$parent_id} AND c.is_deleted = 0
+            WHERE c.parent_id = {$parent_id}
             {$cursor}
             ORDER BY c.created_at, c.comment_id
             LIMIT {$limit}
@@ -237,11 +236,11 @@ class Comment_model extends MY_Model
         $root_id = (int)$root_id;
         $sql = "
             SELECT c.comment_id, c.post_id, c.user_id, c.parent_id,
-                   c.root_id, c.depth, c.path, c.comment_detail, c.created_at,
+                   c.root_id, c.depth, c.path, c.comment_detail, c.created_at, c.is_deleted,
                    u.name AS author_name
             FROM {$this->table} c
             JOIN users u ON u.user_id = c.user_id
-            WHERE c.root_id = {$root_id} AND c.is_deleted = 0
+            WHERE c.root_id = {$root_id}
             ORDER BY c.path ASC
         ";
         return $this->excute($sql, 'rows');
@@ -264,7 +263,6 @@ class Comment_model extends MY_Model
             SELECT *
             FROM {$this->table}
             WHERE path LIKE " . $this->db->escape($like) . "
-              AND is_deleted = 0
             ORDER BY path ASC
         ";
         return $this->excute($sql, 'rows');
@@ -275,7 +273,7 @@ class Comment_model extends MY_Model
     {
         $comment_id = (int)$comment_id;
         return $this->db->where('comment_id', $comment_id)
-            ->update($this->table, ['is_deleted' => 1]);
+            ->update($this->table, ['is_deleted' => 1, 'comment_detail'  => '삭제된 댓글입니다',]);
     }
 
     /** 소프트 삭제: 자기 + 하위 전부 */
@@ -303,11 +301,11 @@ class Comment_model extends MY_Model
         SELECT 
             c.comment_id, c.post_id, c.user_id, c.parent_id,
             c.root_id, c.depth, c.path,
-            c.comment_detail, c.created_at,
+            c.comment_detail, c.created_at, c.is_deleted,
             u.name AS author_name
         FROM {$this->table} AS c
         JOIN users AS u ON u.user_id = c.user_id
-        WHERE c.comment_id = {$comment_id} AND c.is_deleted = 0
+        WHERE c.comment_id = {$comment_id}
         LIMIT 1
     ";
         return $this->excute($sql, 'row');
@@ -324,7 +322,7 @@ class Comment_model extends MY_Model
       SELECT c.*, u.name AS author_name
       FROM {$this->table} c
       JOIN users u ON u.user_id=c.user_id
-      WHERE c.post_id={$post_id} AND c.is_deleted=0 AND c.path < {$this->db->escape($center)}
+      WHERE c.post_id={$post_id} AND c.path < {$this->db->escape($center)}
       ORDER BY c.path DESC
       LIMIT " . ((int)$before + 1);
 
@@ -333,7 +331,7 @@ class Comment_model extends MY_Model
       SELECT c.*, u.name AS author_name
       FROM {$this->table} c
       JOIN users u ON u.user_id=c.user_id
-      WHERE c.post_id={$post_id} AND c.is_deleted=0 AND c.path >= {$this->db->escape($center)}
+      WHERE c.post_id={$post_id} AND c.path >= {$this->db->escape($center)}
       ORDER BY c.path ASC
       LIMIT " . ((int)$after + 1);
 

@@ -1,5 +1,7 @@
 (function (root) {
   if (root.__toast) return;
+
+  // 토스트 스타일 생성 및 주입
   const style = document.createElement("style");
   style.textContent = `
   .toast-wrap{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:2147483647;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -8,10 +10,12 @@
   `;
   document.head.appendChild(style);
 
+  // 토스트 담을 컨테이너를 body에 추가
   const wrap = document.createElement("div");
   wrap.className = "toast-wrap";
   document.body.appendChild(wrap);
 
+  // 전역에 window.__toast() 함수 등록
   root.__toast = function (msg, metaText, onClick) {
     const el = document.createElement("div");
     el.className = "toast";
