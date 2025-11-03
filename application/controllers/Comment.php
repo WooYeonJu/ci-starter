@@ -1,8 +1,6 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-// OPTION: 댓글 수정?
-
 /** 
  * CHECKLIST: 무한 스크롤로 구현했을 때 댓글 토스트 뜨면 그 주위 앞뒤 100개씩 가져오면 
  * 작성중이던 대댓 캐시에 저장? -> 작성중이던 대댓으로 돌아가기 눌러서 캐시에 있던 정보 가져오기?
@@ -10,10 +8,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * 만약 쭉 내려서 대댓 쓰다가 다른 사람이 댓글 달았다 토스트 떠서
  * 그거 눌렀더니 한참 이동했어 그래서 그 사람이 대댓 쓰던 댓글이 사라졌어
  * 근데? 캐시에 저장해두면 그거 찾을 수 있나? 
- */
-
-/**
- * CHECKLIST: 댓글 삭제할 때도 사용자가 바로 알 수 있게 해야하나?
  */
 
 class Comment extends MY_Controller
@@ -466,7 +460,6 @@ class Comment extends MY_Controller
     // =========================================================
     // 댓글 삭제 로직
     // =========================================================
-    // TODO: 댓글 등록 후 삭제 버튼 안 뜨는 오류 수정
     // TODO: 댓글 버튼 css 안 먹는거 수정
     public function delete($comment_id)
     {

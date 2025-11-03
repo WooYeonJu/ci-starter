@@ -121,7 +121,8 @@ h3 {
 }
 
 /* ── 버튼 ───────────────────────────── */
-.btn-reply {
+.btn-reply,
+.btn-delete {
   border: 1px solid #e5e7eb;
   background: #fff;
   color: #374151;
@@ -134,6 +135,17 @@ h3 {
 .btn-reply:hover {
   background: #f3f4f6;
   border-color: #d1d5db;
+}
+
+/* 삭제 버튼: 평소엔 중립, hover에 살짝 위험색 */
+.btn-delete {
+  color: #d68484;
+  background: #fff5f5;
+}
+.btn-delete:hover {
+  border-color: #d68484;
+  background: #fff5f5;
+  color: var(--c-danger-dark);
 }
 
 /* ── 대댓글 입력 폼 ───────────────────────────── */
