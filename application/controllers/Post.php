@@ -216,7 +216,16 @@ class Post extends MY_Controller
         $this->optimizer->setCss('comments.css');
 
         // JS
-        $this->optimizer->setJs('comments.js');
+        $this->optimizer->setJs('comments/boot.js');
+        $this->optimizer->setJs('comments/state.js');
+        $this->optimizer->setJs('comments/dom.js');
+        $this->optimizer->setJs('comments/toast.js');
+        $this->optimizer->setJs('comments/windowMode.js');
+        $this->optimizer->setJs('comments/api.js');
+        $this->optimizer->setJs('comments/submit.js');
+        $this->optimizer->setJs('comments/sse.js');
+        $this->optimizer->setJs('comments/index.js'); // 마지막: IO 초기화/부트스트랩
+        // $this->optimizer->setJs('comments.js');
 
         $initial_items_count = is_array($comments) ? count($comments) : 0;
 
