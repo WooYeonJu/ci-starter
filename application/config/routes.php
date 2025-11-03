@@ -82,3 +82,6 @@ $route['post/delete/(:num)']['post']  = 'post/delete/$1';
 
 // 댓글 알림 SSE 라우터 설정
 $route['comment/stream/(:num)'] = 'comment/stream/$1';
+
+// 중간 대댓 삽입 시 단일 댓글 조회용 라우터 설정
+$route['comment/item/(:num)'] = 'comment/item/$1';

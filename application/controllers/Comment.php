@@ -4,7 +4,21 @@ defined('BASEPATH') or exit('No direct script access allowed');
 // TODO: 댓글 비동기 처리
 // TODO: 댓글 달리면 페이지 새로고침 하거나 추가적인 작업 하지 않아도 알림 같은거 띄울 수 있게
 // TODO: 수많은 댓글이 있는 페이지에서 최하단에 달렸을 때도 내려가게 + 페이지 전체 새로고침 안되게 
+// TODO: 댓글 삭제(사용자 이름은 남겨두고 내용만 (삭제된 댓글입니다)로 출력?)
+// OPTION: 댓글 수정?
 
+/** 
+ * CHECKLIST: 무한 스크롤로 구현했을 때 댓글 토스트 뜨면 그 주위 앞뒤 100개씩 가져오면 
+ * 작성중이던 대댓 캐시에 저장? -> 작성중이던 대댓으로 돌아가기 눌러서 캐시에 있던 정보 가져오기?
+ * 캐시는 세션 스토리지에 저장 -> 새로고침 정도는 버티나?<div class=""></div>
+ * 만약 쭉 내려서 대댓 쓰다가 다른 사람이 댓글 달았다 토스트 떠서
+ * 그거 눌렀더니 한참 이동했어 그래서 그 사람이 대댓 쓰던 댓글이 사라졌어
+ * 근데? 캐시에 저장해두면 그거 찾을 수 있나? 
+ */
+
+/**
+ * CHECKLIST: 댓글 삭제할 때도 사용자가 바로 알 수 있게 해야하나?
+ */
 
 class Comment extends MY_Controller
 {
@@ -225,6 +239,46 @@ class Comment extends MY_Controller
                 ->set_output(json_encode(['status' => 'error', 'message' => '서버 오류'], JSON_UNESCAPED_UNICODE));
         }
     }
+
+
+    /** 중간 대댓 삽입용 단일 댓글 조회 함수 */
+    public function item($comment_id)
+    {
+        $comment_id = (int)$comment_id;
+        if ($comment_id <= 0) {
+            return $this->output->set_status_header(400)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode([
+                    'status' => 'error',
+                    'message' => 'bad comment_id'
+                ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $row = $this->comment->get_by_id($comment_id);
+        if (!$row || !empty($row['is_deleted'])) {
+            return $this->output->set_status_header(404)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode([
+                    'status' => 'error',
+                    'message' => 'not found'
+                ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // 템플릿으로 li 1개 렌더
+        $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
+        $this->template_->viewAssign(['comments' => [$row]]);
+        $html = (string)$this->template_->viewFetch('comment_items');
+
+        return $this->output
+            ->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode([
+                'status' => 'success',
+                'html'   => $html,
+                'path'   => (string)$row['path'],   // 클라이언트 정렬용
+            ], JSON_UNESCAPED_UNICODE));
+    }
+
+
 
     // =========================================================
     // SSE 관련 엔드포인트

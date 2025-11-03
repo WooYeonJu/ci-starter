@@ -15,12 +15,14 @@
 
 <!-- 댓글 블록 (항상 렌더링) -->
 <!-- data-stream-url: sse 관련 스트림 url 전달 -->
+<!-- data-item-url: 단일 댓글 요소 추가용 url 전달 -->
 <div
   id="comment-section"
   data-post-id="{= post_id_js }"
   data-has-more="{= has_more_js }"
   data-list-url="{= site_url('comment/list_json') }"
   data-stream-url="{= stream_url }"
+  data-item-url="{= site_url('comment/item') }"
 >
   <ul id="comment-list" class="comment-list" style="list-style:none; padding-left:0;">
     {? isset(comments) && comments } {# comment_items } {/}

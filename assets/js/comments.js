@@ -437,6 +437,7 @@ function insertByPathToTopList(newEl) {
     };
   })();
 
+
   // =========================================================
   // SSE 연결
   // =========================================================
@@ -444,6 +445,8 @@ function insertByPathToTopList(newEl) {
     if (!section || typeof EventSource === "undefined") return;
 
     const streamUrl = String(section.dataset.streamUrl || "").replace(/\/+$/, "");
+    const itemUrlBase = String(section.dataset.itemUrl || "").replace(/\/+$/, ""); // ★ 단일 아이템 엔드포인트
+
     const lastKnownId = (function () {
       const last = document.querySelector("#comment-list .comment-item:last-child");
       return last ? Number(last.dataset.id || 0) : 0;
@@ -464,40 +467,126 @@ function insertByPathToTopList(newEl) {
         // 1) 내가 쓴 댓글이면 무시
         if (myUserId && Number(data.user_id) === myUserId) return;
 
-        // 2) 방금 클라이언트가 붙였던 댓글이면 1회 무시(중복 방지)
-        if (cid && clientJustAdded.has(cid)) {
-          clientJustAdded.delete(cid);
+        // 2) 직전에 내가 클라에서 붙였던 거면 1회 무시
+        if (cid && clientJustAdded.has(cid)) { clientJustAdded.delete(cid); return; }
+
+        // 3) 이미 DOM에 있으면(다른 경로로 로드됨) 토스트만 띄우고 끝
+        if (cid && document.getElementById("comment-" + cid)) {
+          window.__toast(`새 댓글이 달렸어요: ${data.snippet || ''}`, meta, () => {
+            const el = document.getElementById("comment-" + cid);
+            if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); highlightOnce(el); }
+          });
           return;
         }
 
-        // 아직 DOM에 없다고 가정하고 추가분 로드
-        hasMore = true;
-        await loadComments();
+        // 4) ★ 핵심: “그 댓글 1개”만 서버에서 받아와 정렬 위치에 삽입
+        if (cid && itemUrlBase) {
+          const res = await fetch(`${itemUrlBase}/${cid}`, { credentials: "same-origin" });
+          if (res.ok) {
+            const j = await res.json();
+            if (j && j.status === "success" && typeof j.html === "string" && j.html.trim()) {
+              const tpl = document.createElement("template");
+              tpl.innerHTML = j.html.trim();
+              const node = tpl.content.firstElementChild;
+              if (node) {
+                node.dataset.origin = "sse";
+                insertByPathToTopList(node);          // ← path 오름차순 자리 꽂기
+                applyDepthColors(node.ownerDocument || document);
+                incCount(1); // 총 개수 +1 (중복삽입 방지 로직이 있어 안전)
 
-        // 실제 DOM에 들어왔으면 개수 +1
-        if (cid && document.getElementById("comment-" + cid)) {
-          incCount(1);
+                // 토스트 클릭 시 스크롤/하이라이트
+                window.__toast(`새 댓글이 달렸어요: ${data.snippet || ''}`, meta, () => {
+                  const el = document.getElementById("comment-" + cid);
+                  if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); highlightOnce(el); }
+                });
+                return;
+              }
+            }
+          }
         }
 
-        // 토스트 클릭 시 해당 댓글로 스크롤 + 하이라이트 시도
-        window.__toast(`새 댓글이 달렸어요: ${data.snippet || ''}`, meta, async () => {
-          let el = document.getElementById("comment-" + cid);
-          if (!el) { await loadComments(); el = document.getElementById("comment-" + cid); }
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-            highlightOnce(el);
-          } else {
-            const last = document.querySelector("#comment-list .comment-item:last-child");
-            if (last) last.scrollIntoView({ behavior: "smooth", block: "end" });
-          }
-        });
+        // 5) (폴백) 그래도 못 붙였으면 마지막 페이지 보충 로드 한번 시도
+        hasMore = true;
+        await loadComments();
+        if (cid && document.getElementById("comment-" + cid)) {
+          incCount(1);
+          window.__toast(`새 댓글이 달렸어요: ${data.snippet || ''}`, meta, () => {
+            const el = document.getElementById("comment-" + cid);
+            if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); highlightOnce(el); }
+          });
+        }
       } catch (err) {
         console.warn("SSE parse error:", err);
       }
     });
 
     es.addEventListener("error", () => {
-      // 브라우저가 자동 재연결함.
+      // 브라우저가 자동 재연결
     });
   })();
+
+
+  // // =========================================================
+  // // SSE 연결
+  // // =========================================================
+  // (function () {
+  //   if (!section || typeof EventSource === "undefined") return;
+
+  //   const streamUrl = String(section.dataset.streamUrl || "").replace(/\/+$/, "");
+  //   const lastKnownId = (function () {
+  //     const last = document.querySelector("#comment-list .comment-item:last-child");
+  //     return last ? Number(last.dataset.id || 0) : 0;
+  //   })();
+
+  //   let es;
+  //   try {
+  //     const url = streamUrl + (streamUrl.includes('?') ? '&' : '?') + 'lastId=' + encodeURIComponent(lastKnownId);
+  //     es = new EventSource(url, { withCredentials: true });
+  //   } catch (_) { return; }
+
+  //   es.addEventListener("comment", async (e) => {
+  //     try {
+  //       const data = JSON.parse(e.data || "{}");
+  //       const cid = Number(data.comment_id || 0);
+  //       const meta = `${data.author_name || '익명'} • ${data.created_at || ''}`.trim();
+
+  //       // 1) 내가 쓴 댓글이면 무시
+  //       if (myUserId && Number(data.user_id) === myUserId) return;
+
+  //       // 2) 방금 클라이언트가 붙였던 댓글이면 1회 무시(중복 방지)
+  //       if (cid && clientJustAdded.has(cid)) {
+  //         clientJustAdded.delete(cid);
+  //         return;
+  //       }
+
+  //       // 아직 DOM에 없다고 가정하고 추가분 로드
+  //       hasMore = true;
+  //       await loadComments();
+
+  //       // 실제 DOM에 들어왔으면 개수 +1
+  //       if (cid && document.getElementById("comment-" + cid)) {
+  //         incCount(1);
+  //       }
+
+  //       // 토스트 클릭 시 해당 댓글로 스크롤 + 하이라이트 시도
+  //       window.__toast(`새 댓글이 달렸어요: ${data.snippet || ''}`, meta, async () => {
+  //         let el = document.getElementById("comment-" + cid);
+  //         if (!el) { await loadComments(); el = document.getElementById("comment-" + cid); }
+  //         if (el) {
+  //           el.scrollIntoView({ behavior: "smooth", block: "center" });
+  //           highlightOnce(el);
+  //         } else {
+  //           const last = document.querySelector("#comment-list .comment-item:last-child");
+  //           if (last) last.scrollIntoView({ behavior: "smooth", block: "end" });
+  //         }
+  //       });
+  //     } catch (err) {
+  //       console.warn("SSE parse error:", err);
+  //     }
+  //   });
+
+  //   es.addEventListener("error", () => {
+  //     // 브라우저가 자동 재연결함.
+  //   });
+  // })();
 })();

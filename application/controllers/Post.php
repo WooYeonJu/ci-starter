@@ -245,16 +245,6 @@ class Post extends MY_Controller
             'url_delete' => site_url('post/delete/' . $post_id),
             'stream_url' => site_url('comment/stream/' . $post_id),
         ]);
-
-        // // 뷰 로드
-        // $this->load->view('post/detail', [
-        //     'title' => $row['title'],
-        //     'post'  => $row,
-        //     'files' => $files,
-        //     'is_owner'  => $is_owner,
-        //     'comments' => $comments,
-        //     'comment_cnt' => $comment_cnt,
-        // ]);
     }
 
 
