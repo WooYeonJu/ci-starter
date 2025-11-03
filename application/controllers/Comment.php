@@ -44,6 +44,65 @@ class Comment extends MY_Controller
     // }
 
 
+    /** 토스트 클릭 시 윈도우 기반 댓글 목록 불러오기 */
+    public function around_json($post_id)
+    {
+        $post_id = (int)$post_id;
+        if ($post_id <= 0) {
+            return $this->output->set_status_header(400)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'bad post_id'], JSON_UNESCAPED_UNICODE));
+        }
+
+        // centerId 또는 centerPath 둘 중 하나 받기
+        $centerId   = (int)$this->input->get('centerId', true);
+        $centerPath = (string)$this->input->get('centerPath', true);
+
+        $before = (int)$this->input->get('before', true);
+        $after  = (int)$this->input->get('after', true);
+        if ($before <= 0) $before = 100;
+        if ($after  <= 0) $after  = 100;
+        if ($before > 500) $before = 500;
+        if ($after  > 500) $after  = 500;
+
+        // centerPath 없으면 centerId로 path 조회
+        if ($centerPath === '' && $centerId > 0) {
+            $row = $this->comment->get_by_id($centerId);
+            if (!$row || !empty($row['is_deleted'])) {
+                return $this->output->set_status_header(404)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'error', 'message' => 'center not found'], JSON_UNESCAPED_UNICODE));
+            }
+            $centerPath = (string)$row['path'];
+        }
+        if ($centerPath === '') {
+            return $this->output->set_status_header(400)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'centerPath/centerId required'], JSON_UNESCAPED_UNICODE));
+        }
+
+        $win = $this->comment->get_window_around_path($post_id, $centerPath, $before, $after);
+        $items = $win['items'] ?? [];
+
+        // li 템플릿 렌더
+        $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
+        $this->template_->viewAssign(['comments' => $items]);
+        $html = (string)$this->template_->viewFetch('comment_items');
+
+        return $this->output->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode([
+                'status'    => 'success',
+                'html'      => $html,
+                'hasPrev'   => !empty($win['hasPrev']),
+                'prevCursor' => (string)($win['prevCursor'] ?? ''), // 위쪽(작은 path 끝점)
+                'hasNext'   => !empty($win['hasNext']),
+                'nextCursor' => (string)($win['nextCursor'] ?? ''), // 아래쪽(큰 path 끝점)
+                'centerPath' => $centerPath,
+            ], JSON_UNESCAPED_UNICODE));
+    }
+
+
+
     public function list_json($post_id)
     {
         $post_id = (int)$post_id;
@@ -215,8 +274,15 @@ class Comment extends MY_Controller
             // =========================================================
 
             $row = $this->comment->get_by_id($new_id);
+            if (!$row) {
+                return $this->output->set_status_header(500)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'error', 'message' => '방금 작성한 댓글을 찾을 수 없습니다'], JSON_UNESCAPED_UNICODE));
+            }
 
-            $html = $this->template_->viewFetchDirect('comment/_items', ['comments' => [$row]]);
+            $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
+            $this->template_->viewAssign(['comments' => [$row]]);
+            $html = (string)$this->template_->viewFetch('comment_items');
 
             return $this->output
                 ->set_content_type('application/json', 'utf-8')

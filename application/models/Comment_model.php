@@ -312,4 +312,59 @@ class Comment_model extends MY_Model
     ";
         return $this->excute($sql, 'row');
     }
+
+    /** 윈도우 기반 댓글 목록 불러올 코드 */
+    public function get_window_around_path($post_id, $centerPath, $before, $after)
+    {
+        $post_id = (int)$post_id;
+        $center  = $this->db->escape_str($centerPath);
+
+        // 위쪽: center보다 작은 path DESC로 (before+1)개 -> 초과 여부로 hasPrev 판단
+        $sqlPrev = "
+      SELECT c.*, u.name AS author_name
+      FROM {$this->table} c
+      JOIN users u ON u.user_id=c.user_id
+      WHERE c.post_id={$post_id} AND c.is_deleted=0 AND c.path < {$this->db->escape($center)}
+      ORDER BY c.path DESC
+      LIMIT " . ((int)$before + 1);
+
+        // 아래쪽: center 이상 path ASC로 (after+1)개 -> 초과 여부로 hasNext 판단
+        $sqlNext = "
+      SELECT c.*, u.name AS author_name
+      FROM {$this->table} c
+      JOIN users u ON u.user_id=c.user_id
+      WHERE c.post_id={$post_id} AND c.is_deleted=0 AND c.path >= {$this->db->escape($center)}
+      ORDER BY c.path ASC
+      LIMIT " . ((int)$after + 1);
+
+        $prevRows = $this->excute($sqlPrev, 'rows') ?: [];
+        $nextRows = $this->excute($sqlNext, 'rows') ?: [];
+
+        $hasPrev = count($prevRows) > $before;
+        $hasNext = count($nextRows) > $after;
+
+        if ($hasPrev) array_pop($prevRows); // 초과분 제거
+        if ($hasNext) array_pop($nextRows);
+
+        // prevRows는 DESC로 뽑았으니 화면용으로 다시 ASC로 뒤집기
+        $prevRows = array_reverse($prevRows);
+
+        // 윈도우 = prev + next (중복 방지: 혹시 center가 양쪽에 걸려도 path 기준이므로 정상)
+        $items = array_merge($prevRows, $nextRows);
+
+        // 커서 계산
+        $prevCursor = '';
+        if (!empty($prevRows)) $prevCursor = (string)$prevRows[0]['path']; // 더 위로 로드할 때 기준(이보다 작은 쪽)
+
+        $nextCursor = '';
+        if (!empty($nextRows)) $nextCursor = (string)$nextRows[count($nextRows) - 1]['path']; // 더 아래 로드할 때 기준
+
+        return [
+            'items'      => $items,
+            'hasPrev'    => $hasPrev,
+            'hasNext'    => $hasNext,
+            'prevCursor' => $prevCursor,
+            'nextCursor' => $nextCursor,
+        ];
+    }
 }
