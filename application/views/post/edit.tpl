@@ -144,13 +144,49 @@
     clearAllBtn.style.display = dt.files.length ? 'inline-block' : 'none';
   }
 
-  // 파일 선택: 마지막 선택만 유지(누적으로 바꾸려면 dt 재생성 줄 제거)
-  input.addEventListener('change', function() {
-    dt = new DataTransfer();
-    Array.from(input.files).forEach(function(f){ dt.items.add(f); });
-    input.files = dt.files;
-    render();
+  // 파일 선택 시: 이미 올라가 있는 파일(기존 첨부) + 이미 선택된 새 파일과 중복이면 제외
+input.addEventListener('change', function() {
+  var skipped = [];          // 중복이라 제외된 파일 이름들
+
+  // 매번 새 DataTransfer 생성 (지금 구조 유지)
+  dt = new DataTransfer();
+
+  Array.from(input.files).forEach(function(f) {
+    // 1) 기존 첨부파일과 중복인지 검사: "이름만" 비교
+    var isDupExisting = existing.some(function(ex) {
+      return ex.name === f.name;
+    });
+
+    // 2) 이번에 선택한 새 파일 목록 안에서 중복인지 검사
+    var isDupNew = Array.from(dt.files).some(function(df) {
+      return df.name === f.name && df.size === f.size;
+    });
+
+    if (isDupExisting || isDupNew) {
+      skipped.push(f.name);
+      return; // dt에 추가하지 않음
+    }
+
+    // 중복 아니면 실제 업로드 목록에 추가
+    dt.items.add(f);
   });
+
+  // input.files 를 우리가 만든 dt로 교체
+  input.files = dt.files;
+
+  // 화면 다시 렌더
+  render();
+
+  // 중복으로 제외된 파일이 있으면 안내
+  if (skipped.length) {
+    alert(
+      '이미 첨부된 파일(또는 같은 파일)이 있어서 제외되었습니다.\n\n' +
+      skipped.join('\n')
+    );
+  }
+});
+
+
 
   // "모두 제거": 새 파일만 초기화
   clearAllBtn.addEventListener('click', function(){
