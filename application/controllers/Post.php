@@ -1,6 +1,6 @@
-<!-- TODO: 에러 떴을 때 redirect 되는거 php 파일로 리다이렉트 되는거 수정 -->
 <!-- TODO: 게시글 작성 실패했을 때 자기가 썼던 내용 + 파일 목록 다 다시
   띄워지게 -->
+<!-- TODO: 게시글 목록에서 총 댓글 개수 같이 띄워줄 수 있게 -->
 <!-- CHECKLIST: 파일 업로드 시 파일명 unique인지, 해시 쓰는지 확인 후 수정 -->
 <!-- TODO: 게시글 수정할 때 기존에 올렸던 파일 다시 올렸을 때 업로드 안 되도록 수정 -->
 
@@ -84,11 +84,11 @@ class Post extends MY_Controller
         foreach ($pages as $p) {
             if ($prev !== null) {
                 if ($p - $prev > 1) {
-                    $push_sep();                       // |
-                    $pages_view[] = ['type' => 'ellipsis']; // …
-                    $push_sep();                       // |
+                    $push_sep();
+                    $pages_view[] = ['type' => 'ellipsis'];
+                    $push_sep();
                 } else {
-                    $push_sep();                       // |
+                    $push_sep();
                 }
             }
 
@@ -226,7 +226,7 @@ class Post extends MY_Controller
         $this->optimizer->setJs('comments/submit.js');
         $this->optimizer->setJs('comments/delete.js');
         $this->optimizer->setJs('comments/sse.js');
-        $this->optimizer->setJs('comments/index.js'); // 마지막: IO 초기화/부트스트랩
+        $this->optimizer->setJs('comments/index.js');
         // $this->optimizer->setJs('comments.js');
 
         $initial_items_count = is_array($comments) ? count($comments) : 0;
@@ -268,7 +268,6 @@ class Post extends MY_Controller
         // 카테고리 목록 조회
         $categories = $this->posts->get_categories();
 
-
         // 본문 템플릿 지정
         $this->template_->viewDefine('layout_common', 'post/create.tpl');
 
@@ -309,10 +308,13 @@ class Post extends MY_Controller
 
         if (!$this->form_validation->run()) {
             $categories = $this->posts->get_categories();
-            return $this->load->view('post/create', [
+
+            $this->template_->viewDefine('layout_common', 'post/create.tpl');
+            $this->template_->viewAssign([
                 'title'      => '게시글 작성',
                 'categories' => $categories,
             ]);
+            // return $this->load->view('post/create', []);
         }
 
         $category_id = (int)$this->input->post('category_id');
@@ -696,12 +698,21 @@ class Post extends MY_Controller
         if (!$this->form_validation->run()) {
             $categories = $this->posts->get_categories();
             $files = $this->posts->get_files($post_id);
-            return $this->load->view('post/edit', [
+
+            $this->template_->viewDefine('layout_common', 'post/edit.tpl');
+            $this->template_->viewAssign([
                 'title'      => '게시글 수정',
                 'post'       => $post,
                 'categories' => $categories,
                 'files'      => $files
             ]);
+
+            // return $this->load->view('post/edit', [
+            //     'title'      => '게시글 수정',
+            //     'post'       => $post,
+            //     'categories' => $categories,
+            //     'files'      => $files
+            // ]);
         }
 
         // 스테이징 경로/최종 경로

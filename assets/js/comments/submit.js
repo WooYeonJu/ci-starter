@@ -1,3 +1,5 @@
+// TODO: 댓글 작성자 toast 알림 지우고 자동 스크롤 + 하이라이트 && 댓글 목록 자동 갱신되도록
+
 (function (root) {
   const { state, applyDepthColors, incCount } = root.CMT || {};
   const {
@@ -9,7 +11,7 @@
   const { ensureItemPresent, showNewCommentToast } = root.CMT || {};
   if (!state) return;
 
-  // back/forward auto scroll prevention
+  // 뒤로가기 클릭시 자동 스크롤 복원 끄는 코드
   if ("scrollRestoration" in history) {
     try {
       history.scrollRestoration = "manual";
@@ -34,6 +36,11 @@
     return e.data;
   }
 
+  /**
+   * 삭제된 댓글인지 확인 -> 답글 버튼 눌렀을 때 처리용
+   * @param {*} cid
+   * @returns
+   */
   async function checkDeleted(cid) {
     const cached = getCache(cid);
     if (cached) return cached;
