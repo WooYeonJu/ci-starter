@@ -911,6 +911,16 @@ class Post extends MY_Controller
         if (!$me || (int)$me['user_id'] !== (int)$post['user_id']) show_404();
 
         $this->posts->soft_delete_post($post_id);
+
+        $rows = $this->files->get_by_post($post_id);
+
+        foreach ($rows as $r) {
+            $full = FCPATH . $r['path'];
+            if (is_file($full)) {
+                @unlink($full);
+            }
+        }
+
         $this->session->set_flashdata('success', '게시글이 삭제되었습니다.');
         return redirect('post'); // 목록으로
     }

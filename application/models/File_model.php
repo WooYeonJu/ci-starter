@@ -1,5 +1,3 @@
-<!-- TODO: 게시글 삭제 시 서버에 업로드 된 파일까지 함께 삭제되도록 로직 수정 -->
-
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
@@ -19,5 +17,14 @@ class File_model extends MY_Model
             'size_bytes'    => (int)$data['size_bytes'],
         ]);
         return $this->excute($sql, 'rtn');
+    }
+
+    public function get_by_post($post_id)
+    {
+        $sql = "SELECT path
+                FROM file
+                WHERE post_id = {$post_id}";
+
+        return $this->excute($sql, 'rows');
     }
 }
