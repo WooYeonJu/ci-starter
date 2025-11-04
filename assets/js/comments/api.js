@@ -1,3 +1,6 @@
+// 댓글 더 불러오기
+// 토스크 눌렀을 때 그 댓글로 자동 스크롤
+
 (function (root) {
   const { state, applyDepthColors, incCount } = root.CMT || {};
   const {
@@ -11,6 +14,9 @@
   const { enterWindowMode } = root.CMT || {};
   if (!state) return;
 
+  /**
+   * 무한 스크롤 구현 함수
+   */
   async function loadComments() {
     if (state.loading || !state.hasMore) return false;
     state.loading = true;
@@ -73,6 +79,12 @@
     }
   }
 
+  /**
+   * 댓글 id(cid) 기반으로 path 읽어오는 함수
+   * @param {*} centerPath
+   * @param {*} cid
+   * @returns
+   */
   async function ensureFullPath(centerPath, cid) {
     let path = centerPath;
     if (
@@ -97,6 +109,13 @@
     return path;
   }
 
+  /**
+   * 해당 댓글 DOM이 실제로 보장하는지
+   * - 지금 페이지에 이 댓글 DOM이 있는지 확인 후
+   * 없으면 서버에서 가져와서 현재 리스트에 끼워넣기
+   * @param {*} param0
+   * @returns
+   */
   async function ensureItemPresent({ path = "", cid = 0 }) {
     const safeSel = (s) =>
       window.CSS && CSS.escape ? CSS.escape(s) : s.replace(/["\\]/g, "\\$&");
@@ -152,6 +171,11 @@
     } catch (_) {}
   }
 
+  /**
+   * 자식만 보이는 경우 부모 스레드도 보이게 해주는 함수
+   * @param {*} childFullPath
+   * @returns
+   */
   async function ensureThreadVisible(childFullPath) {
     const lastSlash = (childFullPath || "").lastIndexOf("/");
     if (lastSlash <= 0) return;
@@ -189,6 +213,10 @@
     } catch (_) {}
   }
 
+  /**
+   * 토스트 생성 및 해당 댓글로 이동
+   * @param {*} param0
+   */
   async function showNewCommentToast({
     centerPath = "",
     cid = 0,

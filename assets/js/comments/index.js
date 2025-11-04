@@ -1,9 +1,10 @@
+// 무한 스크롤 로더
+// api.js의 loadComments() 호출
 (function (root) {
   const { state } = root.CMT || {};
   const { loadComments } = root.CMT || {};
   if (!state) return;
 
-  // normal infinite scroll observer
   state.io =
     typeof IntersectionObserver !== "undefined"
       ? new IntersectionObserver(

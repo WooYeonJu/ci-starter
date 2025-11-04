@@ -1,4 +1,3 @@
-// assets/js/comment-delete.js
 (function () {
   const section = document.getElementById("comment-section");
   if (!section) return;

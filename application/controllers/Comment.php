@@ -460,7 +460,6 @@ class Comment extends MY_Controller
     // =========================================================
     // 댓글 삭제 로직
     // =========================================================
-    // TODO: 댓글 버튼 css 안 먹는거 수정
     public function delete($comment_id)
     {
         @ini_set('display_errors', 0);
