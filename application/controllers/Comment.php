@@ -308,6 +308,10 @@ class Comment extends MY_Controller
                     ->set_output(json_encode(['status' => 'error', 'message' => '방금 작성한 댓글을 찾을 수 없습니다'], JSON_UNESCAPED_UNICODE));
             }
 
+            // snippet 생성 (앞 40자 정도)
+            $rawDetail = $row['comment_detail'] ?? '';
+            $snippet = mb_substr(strip_tags($rawDetail), 0, 40, 'UTF-8');
+
             $this->template_->viewDefine('comment_items', 'comment/_items.tpl');
             // $this->template_->viewAssign(['comments' => [$row]]);
             $this->template_->viewAssign([
@@ -322,6 +326,7 @@ class Comment extends MY_Controller
                     'status'      => 'success',
                     'comment_id'  => $new_id,
                     'user_id'      => (int)$user_id,
+                    'snippet' => $snippet,
                     'html' => $html,
                     'message' => '댓글이 등록되었습니다.'
                 ], JSON_UNESCAPED_UNICODE));
