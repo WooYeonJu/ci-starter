@@ -224,40 +224,57 @@
     meta = "",
   }) {
     window.__toast(`새 댓글이 달렸어요: ${snippet}`, meta, async () => {
-      try {
-        let path = await ensureFullPath(centerPath, cid);
-        if (!root.CMT.shouldInsertIntoCurrentWindow(path)) {
-          const qs = new URLSearchParams({
-            centerPath: path,
-            before: 100,
-            after: 100,
-          });
-          const r2 = await fetch(
-            `${state.aroundUrlBase}/${state.postId}?${qs}`,
-            { credentials: "same-origin" }
-          );
-          if (r2.ok) {
-            const a = await r2.json();
-            if (a && a.status === "success") {
-              root.CMT.enterWindowMode(
-                a.html,
-                {
-                  hasPrev: !!a.hasPrev,
-                  prevCursor: a.prevCursor || "",
-                  hasNext: !!a.hasNext,
-                  nextCursor: a.nextCursor || "",
-                  centerPath: a.centerPath || path,
-                },
-                { behavior: "replace" }
-              );
-            }
+      // 기존 onclick 로직 대신 jumpToComment 사용
+      await jumpToComment({ centerPath, cid, behavior: "replace" });
+    });
+  }
+
+  async function jumpToComment({
+    centerPath = "",
+    cid = 0,
+    behavior = "replace", // windowMode 교체 vs 병합 모드
+  }) {
+    try {
+      // 1) path 보정
+      let path = await ensureFullPath(centerPath, cid);
+
+      // 2) 현재 윈도우 밖이면, 그 댓글을 센터로 하는 windowMode로 재구성
+      if (!root.CMT.shouldInsertIntoCurrentWindow(path)) {
+        const qs = new URLSearchParams({
+          centerPath: path,
+          before: 100,
+          after: 100,
+        });
+        const r2 = await fetch(`${state.aroundUrlBase}/${state.postId}?${qs}`, {
+          credentials: "same-origin",
+        });
+        if (r2.ok) {
+          const a = await r2.json();
+          if (a && a.status === "success") {
+            root.CMT.enterWindowMode(
+              a.html,
+              {
+                hasPrev: !!a.hasPrev,
+                prevCursor: a.prevCursor || "",
+                hasNext: !!a.hasNext,
+                nextCursor: a.nextCursor || "",
+                centerPath: a.centerPath || path,
+              },
+              { behavior } // "replace" or "merge"
+            );
           }
         }
-        await ensureThreadVisible(path);
-        await ensureItemPresent({ path, cid });
-        root.CMT.focusByPathOrId(path, cid);
-      } catch (_) {}
-    });
+      }
+
+      // 3) 부모 스레드가 잘려 있다면 위쪽까지 보이게 확장
+      await ensureThreadVisible(path);
+      // 4) 실제 해당 댓글 DOM이 있는지 보장 (없으면 서버에서 끌어와서 삽입)
+      await ensureItemPresent({ path, cid });
+      // 5) 스크롤 + 하이라이트
+      root.CMT.focusByPathOrId(path, cid);
+    } catch (_) {
+      // 실패해도 앱이 죽지 않게 그냥 무시
+    }
   }
 
   root.CMT = Object.assign(root.CMT || {}, {
@@ -266,5 +283,6 @@
     ensureItemPresent,
     ensureThreadVisible,
     showNewCommentToast,
+    jumpToComment,
   });
 })(window);

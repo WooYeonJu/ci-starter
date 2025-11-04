@@ -1,5 +1,3 @@
-// TODO: 댓글 작성자 toast 알림 지우고 자동 스크롤 + 하이라이트 && 댓글 목록 자동 갱신되도록
-
 (function (root) {
   const { state, applyDepthColors, incCount } = root.CMT || {};
   const {
@@ -8,7 +6,8 @@
     scrollToWithOffset,
     shouldInsertIntoCurrentWindow,
   } = root.CMT || {};
-  const { ensureItemPresent, showNewCommentToast } = root.CMT || {};
+  const { ensureItemPresent, showNewCommentToast, jumpToComment } =
+    root.CMT || {};
   if (!state) return;
 
   // 뒤로가기 클릭시 자동 스크롤 복원 끄는 코드
@@ -268,6 +267,40 @@
       }
       if (data.message) alert(data.message);
 
+      // const hasHtml =
+      //   typeof data.html === "string" && data.html.trim().length > 0;
+      // if (hasHtml) {
+      //   const tpl = document.createElement("template");
+      //   tpl.innerHTML = data.html.trim();
+      //   const newEl = tpl.content.firstElementChild;
+      //   if (newEl) {
+      //     incCount(1);
+      //     newEl.dataset.origin = "client";
+      //     const newPath = newEl.dataset?.path || "";
+      //     if (
+      //       typeof shouldInsertIntoCurrentWindow === "function" &&
+      //       !shouldInsertIntoCurrentWindow(newPath)
+      //     ) {
+      //       const nid =
+      //         Number(
+      //           newEl.dataset.id || (newEl.id || "").replace("comment-", "")
+      //         ) || 0;
+      //       if (nid) state.clientJustAdded.add(nid);
+      //       showNewCommentToast({
+      //         centerPath: newPath,
+      //         cid: nid,
+      //         snippet: data.snippet || "",
+      //         meta: "",
+      //       });
+      //       try {
+      //         form.reset();
+      //       } catch {}
+      //       if (form.classList.contains("reply-form"))
+      //         form.style.display = "none";
+      //       return;
+      //     }
+      //     insertByPathToTopList(newEl);
+
       const hasHtml =
         typeof data.html === "string" && data.html.trim().length > 0;
       if (hasHtml) {
@@ -277,48 +310,67 @@
         if (newEl) {
           incCount(1);
           newEl.dataset.origin = "client";
+
           const newPath = newEl.dataset?.path || "";
-          if (
-            typeof shouldInsertIntoCurrentWindow === "function" &&
-            !shouldInsertIntoCurrentWindow(newPath)
-          ) {
-            const nid =
-              Number(
-                newEl.dataset.id || (newEl.id || "").replace("comment-", "")
-              ) || 0;
-            if (nid) state.clientJustAdded.add(nid);
-            showNewCommentToast({
-              centerPath: newPath,
-              cid: nid,
-              snippet: data.snippet || "",
-              meta: "",
-            });
-            try {
-              form.reset();
-            } catch {}
-            if (form.classList.contains("reply-form"))
-              form.style.display = "none";
-            return;
-          }
-          insertByPathToTopList(newEl);
+          const nid =
+            Number(
+              newEl.dataset.id || (newEl.id || "").replace("comment-", "")
+            ) ||
+            newId ||
+            0;
+          if (nid) state.clientJustAdded.add(nid);
+
+          // 폼은 일단 정리
           try {
             form.reset();
           } catch {}
           if (form.classList.contains("reply-form"))
             form.style.display = "none";
-          const idFromEl =
-            Number(
-              newEl.dataset.id || (newEl.id || "").replace("comment-", "")
-            ) || 0;
-          if (idFromEl) state.clientJustAdded.add(idFromEl);
+
+          // ★ 윈도우 밖이면: 토스트 X, 바로 jumpToComment로 이동
+          if (
+            typeof shouldInsertIntoCurrentWindow === "function" &&
+            !shouldInsertIntoCurrentWindow(newPath)
+          ) {
+            await jumpToComment({
+              centerPath: newPath,
+              cid: nid,
+              behavior: "replace",
+            });
+            return;
+          }
+
+          // ★ 윈도우 안이면: 지금 리스트에 끼워넣고 스크롤/하이라이트
+          insertByPathToTopList(newEl);
           applyDepthColors(newEl.ownerDocument || document);
           highlightOnce(newEl);
           scrollToWithOffset(newEl, 120);
+
           if (state.hasMore && state.io && state.sentinel)
             state.io.observe(state.sentinel);
+
           return;
         }
       }
+
+      //     try {
+      //       form.reset();
+      //     } catch {}
+      //     if (form.classList.contains("reply-form"))
+      //       form.style.display = "none";
+      //     const idFromEl =
+      //       Number(
+      //         newEl.dataset.id || (newEl.id || "").replace("comment-", "")
+      //       ) || 0;
+      //     if (idFromEl) state.clientJustAdded.add(idFromEl);
+      //     applyDepthColors(newEl.ownerDocument || document);
+      //     highlightOnce(newEl);
+      //     scrollToWithOffset(newEl, 120);
+      //     if (state.hasMore && state.io && state.sentinel)
+      //       state.io.observe(state.sentinel);
+      //     return;
+      //   }
+      // }
 
       if (!hasHtml && newId && state.itemUrlBase) {
         try {
@@ -335,32 +387,85 @@
                 incCount(1);
                 node.dataset.origin = "client";
                 const newPath = node.dataset?.path || "";
-                if (!shouldInsertIntoCurrentWindow(newPath)) {
-                  showNewCommentToast({
-                    centerPath: newPath,
-                    cid: newId,
-                    snippet: data.snippet || "",
-                    meta: "",
-                  });
-                  return;
-                }
-                insertByPathToTopList(node);
-                applyDepthColors(node.ownerDocument || document);
-                highlightOnce(node);
-                scrollToWithOffset(node, 120);
+                const nid = newId;
+
+                // 폼 정리
                 try {
                   e.target.reset();
                 } catch {}
                 if (e.target.classList?.contains("reply-form"))
                   e.target.style.display = "none";
+
+                // ★ 윈도우 밖이면: 토스트 대신 자동 점프
+                if (
+                  typeof shouldInsertIntoCurrentWindow === "function" &&
+                  !shouldInsertIntoCurrentWindow(newPath)
+                ) {
+                  await jumpToComment({
+                    centerPath: newPath,
+                    cid: nid,
+                    behavior: "replace",
+                  });
+                  return;
+                }
+
+                // 윈도우 안이면: 그냥 현재 리스트에 삽입
+                insertByPathToTopList(node);
+                applyDepthColors(node.ownerDocument || document);
+                highlightOnce(node);
+                scrollToWithOffset(node, 120);
+
                 if (state.hasMore && state.io && state.sentinel)
                   state.io.observe(state.sentinel);
+
                 return;
               }
             }
           }
         } catch (_) {}
       }
+
+      // if (!hasHtml && newId && state.itemUrlBase) {
+      //   try {
+      //     const r = await fetch(`${state.itemUrlBase}/${newId}`, {
+      //       credentials: "same-origin",
+      //     });
+      //     if (r.ok) {
+      //       const j = await r.json();
+      //       if (j && j.status === "success" && j.html) {
+      //         const t = document.createElement("template");
+      //         t.innerHTML = j.html.trim();
+      //         const node = t.content.firstElementChild;
+      //         if (node) {
+      //           incCount(1);
+      //           node.dataset.origin = "client";
+      //           const newPath = node.dataset?.path || "";
+      //           if (!shouldInsertIntoCurrentWindow(newPath)) {
+      //             showNewCommentToast({
+      //               centerPath: newPath,
+      //               cid: newId,
+      //               snippet: data.snippet || "",
+      //               meta: "",
+      //             });
+      //             return;
+      //           }
+      //           insertByPathToTopList(node);
+      //           applyDepthColors(node.ownerDocument || document);
+      //           highlightOnce(node);
+      //           scrollToWithOffset(node, 120);
+      //           try {
+      //             e.target.reset();
+      //           } catch {}
+      //           if (e.target.classList?.contains("reply-form"))
+      //             e.target.style.display = "none";
+      //           if (state.hasMore && state.io && state.sentinel)
+      //             state.io.observe(state.sentinel);
+      //           return;
+      //         }
+      //       }
+      //     }
+      //   } catch (_) {}
+      // }
 
       if (newId) {
         const url = new URL(location.href);
