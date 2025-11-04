@@ -111,6 +111,14 @@ class Post extends MY_Controller
             ];
         }, $categories);
 
+        // 플래시 메시지 읽기
+        $error   = $this->session->flashdata('error');
+        $success = $this->session->flashdata('success');
+
+        // JS 문자열용으로 슬래시/따옴표 escape
+        $error_js   = addslashes($error);
+        $success_js = addslashes($success);
+
         // 템플릿 전달
         $data = [
             'title'        => '게시글 목록',
@@ -124,6 +132,10 @@ class Post extends MY_Controller
             'q'            => $q,
             'qs'           => $qs,
             'pages'        => $pages_view,        // ← 가공본
+            'error'        => $error,
+            'success'      => $success,
+            'error_js'     => $error_js,
+            'success_js'   => $success_js,
         ];
 
         $this->template_->viewDefine('layout_common', 'post/list.tpl');
@@ -307,14 +319,17 @@ class Post extends MY_Controller
         $this->form_validation->set_rules('detail', '내용', 'trim|required');
 
         if (!$this->form_validation->run()) {
-            $categories = $this->posts->get_categories();
+            // $categories = $this->posts->get_categories();
 
-            $this->template_->viewDefine('layout_common', 'post/create.tpl');
-            $this->template_->viewAssign([
-                'title'      => '게시글 작성',
-                'categories' => $categories,
-            ]);
+            // $this->template_->viewDefine('layout_common', 'post/create.tpl');
+            // $this->template_->viewAssign([
+            //     'title'      => '게시글 작성',
+            //     'categories' => $categories,
+            // ]);
             // return $this->load->view('post/create', []);
+            $this->session->set_flashdata('error', '게시글 등록에 실패했습니다.');
+
+            return redirect('post/list');
         }
 
         $category_id = (int)$this->input->post('category_id');
@@ -337,8 +352,8 @@ class Post extends MY_Controller
             $staged_fullpaths = $stage['staged_fullpaths'];
         } catch (Throwable $e) {
             log_message('error', '파일 스테이징 실패(생성): ' . $e->getMessage());
-            $this->session->set_flashdata('error', '파일 업로드에 실패했습니다.');
-            return redirect('post/create');
+            $this->session->set_flashdata('error', '게시글 등록에 실패했습니다.');
+            return redirect('post/list');
         }
 
         // 2) DB + 파일 승격
@@ -370,7 +385,7 @@ class Post extends MY_Controller
 
             log_message('error', '게시글/파일 저장 실패(생성): ' . $e->getMessage());
             $this->session->set_flashdata('error', '게시글 등록에 실패했습니다.');
-            return redirect('post/create');
+            return redirect('post/list');
         }
 
         $this->session->set_flashdata('success', '게시글이 등록되었습니다.');
@@ -699,13 +714,9 @@ class Post extends MY_Controller
             $categories = $this->posts->get_categories();
             $files = $this->posts->get_files($post_id);
 
-            $this->template_->viewDefine('layout_common', 'post/edit.tpl');
-            $this->template_->viewAssign([
-                'title'      => '게시글 수정',
-                'post'       => $post,
-                'categories' => $categories,
-                'files'      => $files
-            ]);
+            $this->session->set_flashdata('error', '수정 처리 중 오류가 발생했습니다.');
+
+            return redirect('post/list');
 
             // return $this->load->view('post/edit', [
             //     'title'      => '게시글 수정',
@@ -728,8 +739,8 @@ class Post extends MY_Controller
             $staged_fullpaths = $stage['staged_fullpaths'];
         } catch (Throwable $e) {
             log_message('error', '파일 스테이징 실패(수정): ' . $e->getMessage() . ' (post_id=' . $post_id . ')');
-            $this->session->set_flashdata('error', '파일 업로드에 실패했습니다.');
-            return redirect('post/edit/' . $post_id);
+            $this->session->set_flashdata('error', '수정 처리 중 오류가 발생했습니다.');
+            return redirect('post/list');
         }
 
         // 2) DB 트랜잭션 시작
@@ -747,8 +758,8 @@ class Post extends MY_Controller
             $this->db->trans_rollback();
             // 스테이징 정리
             $this->fs->cleanup($staged_fullpaths);
-            $this->session->set_flashdata('error', '게시글 수정에 실패했습니다.');
-            return redirect('post/edit/' . $post_id);
+            $this->session->set_flashdata('error', '수정 처리 중 오류가 발생했습니다.');
+            return redirect('post/list');
         }
 
         // 2-2) 새 파일 메타를 "최종 경로(uploads/...)" 기준으로 DB 기록
@@ -763,8 +774,8 @@ class Post extends MY_Controller
             if (!$ok) {
                 $this->db->trans_rollback();
                 $this->fs->cleanup($staged_fullpaths);
-                $this->session->set_flashdata('error', '파일 메타데이터 저장에 실패했습니다.');
-                return redirect('post/edit/' . $post_id);
+                $this->session->set_flashdata('error', '수정 처리 중 오류가 발생했습니다.');
+                return redirect('post/list');
             }
         }
 
@@ -776,8 +787,8 @@ class Post extends MY_Controller
             $this->db->trans_rollback();
             $this->fs->cleanup($staged_fullpaths);
             log_message('error', '파일 승격(임시→최종) 실패(수정): ' . $e->getMessage() . ' (post_id=' . $post_id . ')');
-            $this->session->set_flashdata('error', '파일 이동 중 오류가 발생해 수정이 취소되었습니다.');
-            return redirect('post/edit/' . $post_id);
+            $this->session->set_flashdata('error', '수정 처리 중 오류가 발생했습니다.');
+            return redirect('post/list');
         }
 
         // 2-4) 기존 파일 삭제는 "승격 성공 후" 처리 (안전)
@@ -799,7 +810,7 @@ class Post extends MY_Controller
             // 새로 추가된 파일(최종폴더)의 제거까지 되려면 추가 로직이 필요하지만,
             // promote 성공 후 trans_status FALSE는 드뭅니다. 필요시 여기서도 파일 제거 처리 가능.
             $this->session->set_flashdata('error', '수정 처리 중 오류가 발생했습니다.');
-            return redirect('post/edit/' . $post_id);
+            return redirect('post/list');
         }
         $this->db->trans_commit();
 

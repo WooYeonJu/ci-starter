@@ -3,6 +3,19 @@
   <a href="/post/create" class="create-btn">게시글 작성하기</a>
 </div>
 
+{? error_js }
+<script>
+  alert("{= error_js }");
+</script>
+{/}
+
+{? success_js }
+<script>
+  alert("{= success_js }");
+</script>
+{/}
+
+
 <form method="get" action="{= site_url('post') }" class="toolbar" id="filterForm">
   <input
     type="text"
