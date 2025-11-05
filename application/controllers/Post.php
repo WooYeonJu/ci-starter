@@ -1,6 +1,5 @@
 <!-- TODO: 게시글 목록에서 총 댓글 개수 같이 띄워줄 수 있게 -->
 <!-- CHECKLIST: 파일 업로드 시 파일명 unique인지, 해시 쓰는지 확인 후 수정 -->
-<!-- TODO: 게시글 수정할 때 기존에 올렸던 파일 다시 올렸을 때 업로드 안 되도록 수정 -->
 
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
@@ -709,19 +708,9 @@ class Post extends MY_Controller
         $this->form_validation->set_rules('detail', '내용', 'trim|required');
 
         if (!$this->form_validation->run()) {
-            $categories = $this->posts->get_categories();
-            $files = $this->posts->get_files($post_id);
 
             $this->session->set_flashdata('error', '수정 처리 중 오류가 발생했습니다.');
-
             return redirect('post/list');
-
-            // return $this->load->view('post/edit', [
-            //     'title'      => '게시글 수정',
-            //     'post'       => $post,
-            //     'categories' => $categories,
-            //     'files'      => $files
-            // ]);
         }
 
         // 스테이징 경로/최종 경로

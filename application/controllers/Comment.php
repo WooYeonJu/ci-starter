@@ -1,6 +1,9 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// TODO: 삭제했을 때 댓글 내용은 그대로 두고 화면에 뿌릴 때 전처리해서 뿌리는걸로 수정
+
+
 /** 
  * CHECKLIST: 무한 스크롤로 구현했을 때 댓글 토스트 뜨면 그 주위 앞뒤 100개씩 가져오면 
  * 작성중이던 대댓 캐시에 저장? -> 작성중이던 대댓으로 돌아가기 눌러서 캐시에 있던 정보 가져오기?
